@@ -1,3 +1,5 @@
+![Weekly Schedule](DSA8020_Weekly_Schedule.jpg)
+
 **DSA 8020: Statistical Methods II Spring 2025** (Fully Online)
 ===============================================================
 
