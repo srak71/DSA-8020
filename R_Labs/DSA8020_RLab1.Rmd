@@ -1,0 +1,144 @@
+---
+title: 'DSA 8020 R Lab 1: Simple Linear Regression'
+author: "Whitney"
+date: '`r format(Sys.time(), "%B %d, %Y")`'
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Leaning Tower of Pisa
+
+The dataset \texttt{PisaTower.csv} provides annual measurements of the lean (the difference between where a point on the tower would be if the tower were straight and where it
+actually is) from 1975 to 1987. We would like to characterize lean over time by fitting a simple linear regression.
+
+
+## Load the dataset
+
+**Code:**
+
+```{r}
+PisaTower <- read.csv("PisaTower.csv")
+head(PisaTower)
+```
+
+
+## Descriptive analysis
+
+### Numerical summary
+
+Provide some numerical summaries to describe the response and the predictor variables, respectively, as well as their relationship.
+
+**Code:**
+
+```{r}
+
+```
+
+### Graphical summary
+
+Provide graphical summaries through plots to describe the response and predictor variables, respectively, as well as their relationship.
+
+**Code:**
+
+```{r}
+
+```
+
+
+**Question:** Describe the direction, strength, and the form of the relationship.
+
+**Answer:**
+
+## Simple linear regression
+
+1. Identify the response variable, the predictor variable, and the sample size.
+
+**Answer:**
+
+
+2. Fit a simple linear regression. 
+
+**Code:**
+
+```{r}
+PisaTower <- read.csv("PisaTower.csv")
+head(PisaTower)
+
+
+lm <- lm(lean ~ year, data = PisaTower)
+summary(lm)
+```
+
+3. Write down the fitted linear regression model. 
+
+**Answer:**
+
+4. What is $\hat{\sigma}$, the estimate of $\sigma$?
+
+**Answer:**
+
+
+5. Find a 95% confidence interval for $\beta_{1}$.
+
+**Code:**
+
+```{r}
+confint(lm, level = .90)
+
+beta1_hat <- lm$coefficients[2]
+se_beta1_hat <- se_beta1 <- summary(lm)[["coefficients"]][, 2][2]
+
+n <- dim(PisaTower)[1]
+alpha <- 0.10
+
+t <- qt(1 - alpha / 2, n - 2)
+
+beta1_hat + c(-1, 1) * t * se_beta1_hat
+
+```
+
+6. Test the following hypothesis: $H_{0}: \beta_{1} = 0$ vs. $H_{a} : \beta_{1} \neq 0$ with $\alpha = 0.05$
+
+**Answer:**
+
+
+
+
+7. Construct a 90% confidence interval for $\mathrm{E}[\texttt{lean}]$ in year 1984
+
+**Code:**
+
+```{r}
+
+```
+
+8. Use residuals to check model assumptions.
+
+**Code:**
+
+```{r}
+
+hist(lm$residuals, 5, prob = T)
+sigma <- summary(lm)$sigma
+
+rg <- range(lm$residuals)
+xg <- seq(rg[1], rg[2], len = 500)
+yg <- dnorm(xg, mean = 0, sd = sigma)
+lines(xg, yg, col = "red")
+
+
+plot(lm)
+```
+
+**Answer:**
+
+9. Would it be a good idea to use the fitted linear regression equation to predict \texttt{lean} in year 2010? Explain your answer. 
+
+**Answer:**

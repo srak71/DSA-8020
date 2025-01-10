@@ -1,0 +1,190 @@
+---
+title: "DSA 8020 R Session 4: Multiple Linear Regression III"
+author: "Whitney"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+    fig_width: 7
+    fig_height: 6.5
+    fig_caption: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(faraway)
+data(gala)
+galaNew <- gala[, -2]
+```
+
+## Model Selection
+
+### All Subset Selection
+
+```{r, message=FALSE}
+library(leaps)
+models <- regsubsets(Species ~ ., data = galaNew)
+summary(models)
+```
+
+### Reporting model selection criteria
+
+```{r}
+res.sum <- summary(models)
+criteria <- data.frame(Adj.R2 = res.sum$adjr2,
+  Cp = res.sum$cp, BIC = res.sum$bic)
+
+criteria
+
+plot(2:6, criteria$Cp, las = 1, xlab = "p", ylab = "Cp",
+     pch = 16, col = "gray", ylim = c(1, max(criteria$Cp)))
+abline(0, 1)
+
+plot(2:6, criteria$Adj.R2, las = 1, xlab = "p", ylab = "", pch = 16, col = "gray",
+     main = expression(R['adj']^2))
+points(5, criteria$Adj.R2[4], col = "blue", pch = 16)
+
+plot(2:6, criteria$BIC, las = 1, xlab = "p", ylab = "", pch = 16, col = "gray", main = "BIC")
+points(3, criteria$BIC[2], col = "blue", pch = 16)
+```
+
+### Backward Selection
+
+Starts with all the predictors and
+then removes predictors one by one using some criterion
+
+
+```{r}
+full <- lm(Species ~ ., data = galaNew)
+step(full, direction = "backward")
+```
+
+### Stepwise Selection
+
+A combination of backward elimination and forward selection can involve adding or deleting predictors at each stage
+
+
+```{r}
+step(full, direction = "both")
+```
+
+## Model Diagnostics
+
+### Residual Plot
+
+```{r}
+mod <- lm(Species ~ Elevation + Adjacent, data = galaNew)
+plot(mod$fitted.values, mod$residuals, pch = 16, col = "blue")
+abline(h = 0, col = "red")
+```
+
+### Residual Histogram/QQplot
+
+These are used for assessing normality of residuals
+
+```{r}
+par(las = 1)
+hist(mod$residuals, 5, prob = T, col = "lightblue", border = "gray")
+xg <- seq(-200, 200, 1)
+sd <- sd(mod$residuals)
+yg <- dnorm(xg, 0, sd)
+lines(xg, yg)
+
+plot(qnorm(1:30 / 31, 0, sd), sort(mod$residuals), pch = 16,
+     col = "gray", xlab = "Normal Quantiles", ylab = "Residuals")
+abline(0, 1)
+```
+
+### Leverage
+
+Detecting *extreme* predictor values
+
+```{r}
+step_gala <- step(full, trace = F)
+X <- model.matrix(step_gala)
+H <- X %*% solve((t(X) %*% X)) %*% t(X)
+diag(H)
+lev <- hat(X)
+hatvalues(step_gala)
+
+high_lev <- which(lev >= 2 * 3 / 30)
+attach(gala)
+par(las = 1)
+plot(Elevation, Adjacent, cex = sqrt(5 * lev), col = "blue", ylim = c(0, 5000))
+points(Elevation[high_lev], Adjacent[high_lev], col = "red", pch = 16,
+       cex = sqrt(5 *lev[high_lev]))
+```
+
+### Standardized Residuals
+
+```{r}
+gs <- summary(step_gala)
+gs$sig
+studRes <- gs$res / (gs$sig * sqrt(1 - lev))
+
+rstandard(step_gala)
+
+par(las = 1)
+plot(step_gala$fitted.values, studRes, pch = 16, col = "blue",
+     ylab = expression(r[i]), main = "Studentized Residuals", xlab = "")
+abline(h = 0, lty = 2, col = "gray")
+```
+
+
+### Studentized (Jackknife) Residuals
+
+```{r}
+jack <- rstudent(step_gala)
+
+par(las = 1)
+plot(jack, pch = 16, cex = 0.8, col = "blue", main =" Jacknife Residuals ",
+     xlab = "", ylab = "")
+abline(h = 0, lty = 2, col = "gray")
+```
+
+
+### Identifying Influential Observations: DFFITS
+
+```{r, message=F}
+dffits(step_gala)
+library(olsrr)
+ols_plot_dffits(step_gala)
+```
+
+### Identifying Influential Observations: Cook’s Distance
+
+```{r}
+cooks.distance(step_gala)
+
+par(mfrow = c(2, 1), mar = c(3.8, 3.8, 1.2, 0.5), mgp = c(2.5, 1, 0), las = 1)
+plot(step_gala, which = 4:5)
+```
+
+### Response transformation
+
+```{r}
+par(las = 1)
+plot(step_gala$fitted.values, step_gala$residuals, 
+     pch = 16, cex = 0.8, col = "blue", main =" Residuals ",
+     xlab = expression(hat(Y)), ylab = expression(e))
+abline(h = 0, lty = 2, col = "gray")
+
+sqrt_fit <- lm(sqrt(Species) ~ Elevation + Adjacent)
+
+plot(sqrt_fit$fitted.values, sqrt_fit$residuals, 
+     pch = 16, cex = 0.8, col = "blue", main =" Residuals ",
+     xlab = expression(hat(Y)), ylab = expression(e))
+abline(h = 0, lty = 2, col = "gray")
+```
+
+### Box-Cox Transformation
+
+```{r,message=FALSE}
+library(MASS)
+par(las = 1)
+boxcox <- boxcox(step_gala, plotit = T, lambda = seq(-0.25, 0.75, by = 0.05))
+```
+

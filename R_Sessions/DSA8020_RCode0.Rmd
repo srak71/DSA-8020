@@ -1,0 +1,303 @@
+---
+title: 'DSA 8020 R Session 0: A Quick Introduction to R'
+author: "Whitney Huang"
+date: ""
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This \texttt{R} session is modified from a R tutorial given by Dr. Doug Nychka at Colorado School of Mines [[link]](https://dnychka.github.io/).
+
+
+## Basic
+
+### What is in the workspace?
+
+
+```{r}
+ls()
+```
+
+### Where is my \texttt{R} working directory?
+
+```{r}
+getwd()
+```
+
+
+### What is in my working directory?
+
+```{r}
+dir()
+```
+
+### "$c$" combines sets of numbers (or datasets)
+
+```{r}
+x <- c(2, 3, 20)
+```
+
+*Note*: \texttt{R} is case sensitive. Type "X" in \texttt{R} console and then click
+ Enter to see what happen
+
+### Now recheck workspace
+
+```{r}
+ls()
+# print out x
+x
+```
+
+### Reassign "x" to another name
+
+```{r}
+x2 <- x
+ls()
+```
+
+### Remove "x" and create another object "x3"
+
+```{r}
+rm(x)
+x3 <- c(3, 4, 5)
+```
+
+
+### Question: how would you combine "x2" and "x3" to make a new data set ?
+
+```{r}
+#give a try here
+```
+
+## Arithemtic
+
+### Add numbers in \texttt{R}
+
+```{r}
+A <- 2
+B <- 10
+Y <- A + B
+
+A <- c(2, 3, 4)
+B <- c(10, 100, 1000)
+Y <- A + B
+Y # note that the numbers have been added row by row like a spread sheet.
+```
+
+
+### Some other operations
+
+```{r}
+2^4
+2 * (1 + 4)
+sqrt(81)
+exp(2)
+```
+
+### Generating a sequence 
+
+```{r}
+1:10
+-5:5
+```
+
+*Question*: How would you generate the values in order 5 to 1?
+
+### Generating sin wave
+
+```{r}
+x <- 0:100
+# hundred values between 0 and 2*pi
+x <-  2 * pi * (x / 100)
+y <- sin(x)
+# plot the sin wave 
+plot(x, y)
+# change the plot to connect points with a line instead of points
+plot(x, y, type = "l")
+# another way of creating the x
+x <- seq(0, 2 * pi, length.out = 101)
+```
+
+
+### Use \texttt{R} to generate random values 
+
+```{r}
+# generating 10 random numbers between 0 and 1 
+U <- runif(10)
+U
+# generating 30 random numbers from a standard normal distribution
+V <- rnorm(n = 30, mean = 0, sd = 1)
+hist(V)
+qqnorm(V); qqline(V)
+```
+
+## Subsetting
+
+### Load a data set 
+
+```{r}
+load("BT.RData")
+# copy for easy typing
+BT <- BoulderJuneTemperature$Temp
+BAll <- BoulderJuneTemperature
+head(BT); head(BAll, 10)
+```
+
+
+### Print the first 10 values
+```{r}
+BT[1:10]
+```
+
+### An indicator for all values over 70
+```{r}
+ind70 <- BT > 70
+ind70
+```
+
+ 
+```{r}  
+# temperatures with values over 70
+BT[ind70]
+```
+
+```{r}  
+# the years with values over 70
+BAll$Year[ind70]
+```
+
+*Question*: How many years exceed 70 degrees?
+
+### Working with these data as a matrix
+
+```{r}
+dim(BAll)
+# This is the first row and first column
+BAll[1, 1]
+# first row
+BAll[1,]
+# first column
+BAll[, 1]
+# column with Year (this is also column 1)
+BAll[, "Year"]
+# second column (could also use "Temp" to refer to this)
+BAll[, 2]
+# rows 10 through 20
+BAll[10:20,]
+```
+
+*Exercise*: Plot the temperatures by year
+  
+## Apply Functions in \texttt{R}
+
+### *apply* functions
+
+1. a family of functions in R which allow you to repetitively perform an action on multiple chunks of data
+
+2. run faster than loops and often require less code. 
+
+Let's take a look at some examples
+
+### Load the Boulder temperature data set into R 
+```{r}
+load("BoulderTemperature.RData") # monthly mean temperatures
+dim(BoulderTemperature)
+# check out first row
+BoulderTemperature[1,]
+#extract 1991 - 2010
+yr <- rownames(BoulderTemperature)
+index <- which(yr %in% 1991:2010) 
+tempData <- BoulderTemperature[index,]
+# check this out 
+tempData
+```
+
+### The "*apply*" function
+
+```{r}
+# means  by rows of this table
+byYear <- apply(tempData, 1, FUN = mean) # by rows, 1 = first index
+byYear
+rowMeans(tempData)
+# means by columns
+byMonth <- apply(tempData, 2, FUN = mean) # by cols, 2 = second index
+byMonth
+colMeans(tempData)
+```
+
+
+## Writing Functions in \texttt{R}
+
+
+### Finding the inter quartile range (IQR)
+
+```{r}
+# 75% quantile  
+BT75 <- quantile(BT, .75)
+#Question: Find the interquartile range 75% - 25% quantiles
+# and check this against the built in function
+IQR(BT)
+```
+
+### Building your own function
+
+Here is a function that adds the squares of two numbers. It has three parts, the *calling arguments*, the *body* where you do the work and then *returning any results*.
+
+```{r}
+myFun <- function(a, b){
+    result <- a^2 + b^2
+    return(result)
+}
+
+test1 <- myFun(2, 3)
+test1
+test2 <- myFun(1:5, 11:15)
+test2
+```
+
+Note that the "a", "b" and result are only used inside the function and
+do not appear in your workspace.
+Also since the body is normal R code, this works for vectors automatically.
+
+### Building your own IQR function
+
+```{r}
+myIQR <- function(y){
+  IQR <- quantile(y, .75, names = FALSE) - quantile(y, .25, names = FALSE)
+  return(IQR)
+}
+myIQR(BT)
+```
+
+### Modify this function to work with NAs
+```{r}
+test <- c(BT, NA)  
+myIQR <- function(y, na.rm = FALSE){
+            IQR <- quantile(y, .75, names = FALSE, na.rm = na.rm) - 
+                   quantile(y, .25, names = FALSE, na.rm = na.rm) 
+            return(IQR)
+}
+myIQR(test, na.rm = T)
+```
+
+### Adding warning message 
+
+```{r}
+myIQR <- function(y, na.rm = FALSE){
+# an example of adding a warning     
+    if(na.rm){
+        warning("NAs removed from the data")
+    }
+            IQR <- quantile(y, .75, names = FALSE, na.rm = na.rm) - 
+                   quantile(y, .25, names = FALSE, na.rm = na.rm) 
+            return(IQR)
+} 
+myIQR(test, na.rm = T)
+```
+
