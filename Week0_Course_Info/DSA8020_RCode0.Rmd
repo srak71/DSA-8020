@@ -142,7 +142,7 @@ qqnorm(V); qqline(V)
 ### Load a data set 
 
 ```{r}
-load("BT.RData")
+load("/home/sar-home/Clemson/DSA-8020/datasets/BT.RData")
 # copy for easy typing
 BT <- BoulderJuneTemperature$Temp
 BAll <- BoulderJuneTemperature
@@ -206,7 +206,7 @@ Let's take a look at some examples
 
 ### Load the Boulder temperature data set into R 
 ```{r}
-load("BoulderTemperature.RData") # monthly mean temperatures
+load("/home/sar-home/Clemson/DSA-8020/datasets/BoulderTemperature.RData") # monthly mean temperatures
 dim(BoulderTemperature)
 # check out first row
 BoulderTemperature[1,]
