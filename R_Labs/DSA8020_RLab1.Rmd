@@ -10,6 +10,8 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
 ```
 
 
@@ -24,7 +26,7 @@ actually is) from 1975 to 1987. We would like to characterize lean over time by 
 **Code:**
 
 ```{r}
-PisaTower <- read.csv("PisaTower.csv")
+PisaTower <- read.csv("/home/sar-home/Clemson/DSA-8020/datasets/PisaTower.csv")
 head(PisaTower)
 ```
 
@@ -38,8 +40,39 @@ Provide some numerical summaries to describe the response and the predictor vari
 **Code:**
 
 ```{r}
-
+str(PisaTower)
+summary(PisaTower$lean)
+summary(PisaTower$year)
 ```
+
+```{r leansummary}
+summary_lean <- PisaTower %>%
+  summarise(
+    mean_lean = mean(lean, na.rm = TRUE),
+    median_lean = median(lean, na.rm = TRUE),
+    sd_lean = sd(lean, na.rm = TRUE),
+    min_lean = min(lean, na.rm = TRUE),
+    max_lean = max(lean, na.rm = TRUE)
+  )
+
+summary_lean
+```
+
+
+```{r yearsummary}
+summary_year <- PisaTower %>%
+  summarise(
+    mean_year = mean(year, na.rm = TRUE),
+    median_year = median(year, na.rm = TRUE),
+    sd_year = sd(year, na.rm = TRUE),
+    min_year = min(year, na.rm = TRUE),
+    max_year = max(year, na.rm = TRUE)
+  )
+
+summary_year
+```
+
+
 
 ### Graphical summary
 
@@ -47,7 +80,18 @@ Provide graphical summaries through plots to describe the response and predictor
 
 **Code:**
 
-```{r}
+```{r scatterleantime}
+ggplot(PisaTower, aes(x = year, y = lean)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = "Lean vs. Year", x = "Year", y = "Lean")
+```
+
+```{r histleantime}
+ggplot(PisaTower, aes(x = lean)) +
+  geom_histogram(aes(y = ..density..), binwidth = 0.001, fill = "blue", color = "black") +
+  geom_density(alpha = .2, fill = "pink") + # Adding some transparency to the density plot for better visibility
+  labs(title = "Histogram of Lean with Density Plot", x = "Lean", y = "Density")
 
 ```
 
@@ -56,11 +100,28 @@ Provide graphical summaries through plots to describe the response and predictor
 
 **Answer:**
 
+For our scatter plot:
+
+> The graph indicates that generally the lean values are increasing with time (year). The data points’ general upward trajectory when plotted against time suggests a positive trend. The relationship heading has a positive feel to it, as there is one overall increase that exists in lean and year.  If the points are close together with a little scatter, the relationship is strong, as we can see from the spread of the data points. On the other hand, points that are scattered or spread out suggest a less strong relationship. The level of correlation is not something we can quantify precisely without various statistical measures like the correlation coefficient. The linear regression line drawn through the data points shows that the form of relationship is likely linear. A straight line or smooth curve would suggest that the lean increases steadily through time.
+
+For our histogram:
+
+> This histogram most likely shows the distribution of lean values over years. This shows the frequency of occurrence of each range of lean values in your data.
+You can determine the variation in data and normality of your data based on the shape and spread of The histogram. For example, a roughly symmetric bell curve (e.g., Normal) indicates a strong linear connection. One may also speak of an independence assumption. What breaks your limits  If you see some peaks or modal values in the histogram it may suggest the existence of some clusters or a common range of lean values. 
+
 ## Simple linear regression
 
 1. Identify the response variable, the predictor variable, and the sample size.
 
 **Answer:**
+
+Response Variable:
+  - Lean
+  
+Predictor Variable:
+  - Year
+  
+
 
 
 2. Fit a simple linear regression. 
