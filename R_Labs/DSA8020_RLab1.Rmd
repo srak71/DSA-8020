@@ -12,6 +12,8 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(ggplot2)
+setwd("C:/Users/sar-home/Clemson/Spring_2025_Semester_2/DSA-8020")
+getwd()
 ```
 
 
@@ -26,7 +28,8 @@ actually is) from 1975 to 1987. We would like to characterize lean over time by 
 **Code:**
 
 ```{r}
-PisaTower <- read.csv("/home/sar-home/Clemson/DSA-8020/datasets/PisaTower.csv")
+getwd()
+PisaTower <- read.csv("datasets/PisaTower.csv")
 head(PisaTower)
 ```
 
@@ -120,7 +123,9 @@ Response Variable:
   
 Predictor Variable:
   - Year
-  
+
+Sample Size:
+  - n = 13
 
 
 
@@ -129,9 +134,9 @@ Predictor Variable:
 **Code:**
 
 ```{r}
-PisaTower <- read.csv("PisaTower.csv")
+PisaTower <- read.csv("datasets/PisaTower.csv")
 head(PisaTower)
-
+nrow(PisaTower)
 
 lm <- lm(lean ~ year, data = PisaTower)
 summary(lm)
@@ -141,43 +146,67 @@ summary(lm)
 
 **Answer:**
 
+$\hat{lean}$ = 1.123 + 0.0009319 * year
+
+
 4. What is $\hat{\sigma}$, the estimate of $\sigma$?
 
 **Answer:**
+
+$\hat{\sigma}$ = 0.0004181 where $\hat{\sigma}$ is Residual standard error.
 
 
 5. Find a 95% confidence interval for $\beta_{1}$.
 
 **Code:**
-
 ```{r}
-confint(lm, level = .90)
+confint(lm, level = 0.95)
 
-beta1_hat <- lm$coefficients[2]
-se_beta1_hat <- se_beta1 <- summary(lm)[["coefficients"]][, 2][2]
+beta1_hat <- lm$coefficients[2]  # slope estimate
+se_beta1_hat <- summary(lm)[["coefficients"]][2, 2] # standard error
 
-n <- dim(PisaTower)[1]
-alpha <- 0.10
+n <- nrow(PisaTower) # count observations
+alpha <- 0.05 # significance for .95 confidence interval
 
 t <- qt(1 - alpha / 2, n - 2)
 
-beta1_hat + c(-1, 1) * t * se_beta1_hat
-
+# Confidence Interval
+beta1_ci <- beta1_hat + c(-1, 1) * t * se_beta1_hat
+beta1_ci
 ```
 
 6. Test the following hypothesis: $H_{0}: \beta_{1} = 0$ vs. $H_{a} : \beta_{1} \neq 0$ with $\alpha = 0.05$
 
+
 **Answer:**
 
+Reject $H_{0}$. The p-value is 6.503367e-12, far smaller than $\alpha = 0.05$.
+
+```{r}
+beta1_hat <- lm$coefficients[2]
+se_beta1_hat <- summary(lm)[["coefficients"]][2, 2]
+
+t_stat <- beta1_hat / se_beta1_hat
+n <- nrow(PisaTower)
+df <- n - 2
+
+# P-value two tailed test
+p_val <- 2 * pt(-abs(t_stat), df)
+
+t_stat
+p_val
+```
 
 
 
-7. Construct a 90% confidence interval for $\mathrm{E}[\texttt{lean}]$ in year 1984
+
+7. Construct a 90% confidence interval for $\mathrm{E}[\texttt{lean}]$ in year 1984.
 
 **Code:**
 
 ```{r}
-
+data_1984 <- data.frame(year = 1984)
+predict(lm, newdata = data_1984, interval = "confidence", level = 0.90)
 ```
 
 8. Use residuals to check model assumptions.
@@ -185,7 +214,6 @@ beta1_hat + c(-1, 1) * t * se_beta1_hat
 **Code:**
 
 ```{r}
-
 hist(lm$residuals, 5, prob = T)
 sigma <- summary(lm)$sigma
 
@@ -193,13 +221,41 @@ rg <- range(lm$residuals)
 xg <- seq(rg[1], rg[2], len = 500)
 yg <- dnorm(xg, mean = 0, sd = sigma)
 lines(xg, yg, col = "red")
+```
+
+```{r resvsfitted}
+plot(lm, which = 1) 
+```
+
+```{r qqplot}
+plot(lm, which = 2) 
+```
 
 
-plot(lm)
+```{r scaleloc}
+plot(lm, which = 3) 
 ```
 
 **Answer:**
 
+The residuals are not perfectly normal, which will affect statistical inferences (i.e. hypothesis tests, confidence intervals).
+
+A. Linearity :
+
+- *(Res VS Fitted Plot)* The residuals show a curved pattern rather than random scatter, which suggests non-linearity. This means the model may not fully capture the relationship between the predictors and the response variable.
+
+B. Normality of Residuals:
+
+- *(Histogram of Residuals)* The histogram shows deviations from a perfect bell shape, with some skewness.
+- *(Q-Q Plot)* The Q-Q plot shows deviations in the tails; residuals do not align perfectly with the diagonal.
+
+C. Constant Variance
+
+- *(Scale-Location Plot)* The Scale-Location plot shows a fan-shaped pattern (residual spread increases as fitted values increase). Thus the residuals show non-constant variance. 
+
+
 9. Would it be a good idea to use the fitted linear regression equation to predict \texttt{lean} in year 2010? Explain your answer. 
 
 **Answer:**
+
+No, it would not be a good idea. Based on the residual plots above, the model violates several assumptions **(i.e. Linearity, Normality of Residuals, Constance Variance)** that are critical for reliable predictions in linear regression.
