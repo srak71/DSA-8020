@@ -1,6 +1,6 @@
 ---
 title: 'DSA 8020 R Lab 4: Model Selection and Model Checking'
-author: "your name here"
+author: "saransh rakshak"
 output:
   pdf_document:
     toc: true
@@ -9,6 +9,10 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(faraway)
+library(leaps)
+library(MASS)
 ```
 
 
@@ -43,81 +47,170 @@ data(savings, package = "faraway")
 **Code:**
 
 ```{r,message=FALSE}
+# using lib leaps for R2adj 
+best_subset <- regsubsets(sr ~ pop15 + pop75 + dpi + ddpi, data = savings, nvmax = 4)
+summary_best <- summary(best_subset)
+summary_best
+```
 
+```{r modelselectR2adj}
+best_model_index <- which.max(summary_best$adjr2)
+names(coef(best_subset, best_model_index))
+
+#print("Model Select:")
+#print("sr ~ pop15 + pop75 + ddpi")
 ```
 
 **Answer:**
 
+Our best model is represented as follows: 
+
+> sr ~ pop15 + pop75 + ddpi
+
+- regsubsets() fits multiple regression models for all possible combinations of our four predictors. 
+
+---
 
 2. Perform a stepwise selection using *AIC*
 
 **Code:**
 
-```{r}
-
+```{r stepwiseselectAIC}
+full_model <- lm(sr ~ pop15 + pop75 + dpi + ddpi, data = savings)
+stepwise_model <- stepAIC(full_model, direction = "both", trace=FALSE)#trace = TRUE)
+summary(stepwise_model)
 ```
 
 **Answer:**
+
+- Using "best" model formula as found in step 1
+
+> sr ~ pop15 + pop75 + ddpi
+
+and 
+
+> savings data
+
+- I am using MASS lib's stepAIC func to perform stepwise selection.
+- Performed in both forward and backward directions to minimize AIC.
+
+
+---
 
 3. Perform a general linear F-test (with $\alpha = 0.1$) to choose between the full model (i.e., using the all 4 predictors) and the reduce model that include \texttt{pop15}, \texttt{pop75}, and \texttt{ddpi} as the predictors 
 
 **Code:**
 
 ```{r}
-
+reduced_model <- lm(sr ~ pop15 + pop75 + ddpi, data = savings)
+anova(reduced_model, full_model, test = "F")
 ```
 
 **Answer:**
+
+- Full model uses all four predictors, optimal model does not use dpi.
+- Anova() does F-test comparing both models and see if dpi offers improvement in fitting or is statistically insignificant on our data.
+- Our p-val of 0.7192 leads us to fail to reject null hypothesis that our optimal/reduced model without dpi is sufficient.
+- Thus, we can conclude that dpi is statistically insignificant and can procede using optimal/reduced model of sr ~ pop15 + pop75 + ddpi .
+
+
+---
 
 4. Make a residual plot of the model selected by *AIC*. Then, comment on the model assumptions
 
 **Code:**
 
 ```{r}
-
+plot(stepwise_model$fitted.values, residuals(stepwise_model), 
+     xlab = "Fitted Values", ylab = "Residuals", 
+     main = "Residual Plot")
+abline(h = 0, col = "red")
 ```
 
 **Answer:**
+
+- As our data appears to be randomly scattered, the residual proves our model and the assumptions hold.
+
+---
 
 5. Use both histogram and qqplot to examine the normality assumption on error 
 
 **Code:**
 
-```{r}
+```{r reshist}
+hist(residuals(stepwise_model), main = "Histogram of Residuals", xlab = "Residuals", breaks = 10)
+```
 
+```{r qqplot}
+qqnorm(residuals(stepwise_model))
+qqline(residuals(stepwise_model), col = "red")
 ```
 
 **Answer:**
+
+- Our residual hist approximates a normal distribution. Moreover, our qq-plot, which compares residuals to normal dist, shows that they do indeed follow reference line. 
+- Since both our plots suggest normality, our assumptions hold.
+
+---
+
 
 6. Calculate the leverage values to check if there is any high leverage points (i.e., $h>\frac{2p}{n}$)
 
 **Code:**
 
 ```{r}
-
+leverage_values <- hatvalues(stepwise_model)
+threshold <- (2 * length(coef(stepwise_model))) / nrow(savings)
+high_leverage_points <- which(leverage_values > threshold)
+high_leverage_points
 ```
 
 **Answer:**
+
+- Ireland (21), Japan (23), and Libya (49) have high leverage values, thus these observations have an unusually large influence on model due to predictor values lying far from mean.
+
+- Since qq-plot and histogram show normality, and other model assumptions hold, these high leverage points alone does not invalidate the model.
+
+- Will compute jacknife res in next step to see if these values are significant, but assuming that leverage values do not unduly affect the regression results we can keep them in our model.
+
+
+--- 
 
 7. Compute jackknife residuals to identify outlier(s)
 
 **Code:**
 
 ```{r}
-
+jackknife_residuals <- rstudent(stepwise_model)
+which(abs(jackknife_residuals) > 2)
 ```
 
 **Answer:**
+
+- Chile and Zambia are outliers because their residuals are significantly larger than expected.
+
+- This does not mean the observation must be auto removed, but suggests that savings rates for Chile & Zambia differ substantially from our model prediction.
+
+- However if these points continue to be influential by computing DFFITS, we will need to remove them from model.
+
+---
 
 8. Identifying influential observations by computing DFFITS
 
 **Code:**
 
 ```{r,message=FALSE}
-
+dffits_values <- dffits(stepwise_model)
+thresh_dffits <- 2 * sqrt(length(coef(stepwise_model)) / nrow(savings))
+influ_points <- which(abs(dffits_values) > thresh_dffits)
+influ_points
 ```
 
 **Answer:**
 
+- Japan, Zambia and Libya are influential points, as they significantly affects the model’s predictions.
 
+- Moreover Zambia was also flagged as an outlier when computing jackknife res, and Libia was flagged as an high leverage point in step 6, thus proving these two countries strongly influences the regression results and should be considered for removal.
+
+- Japans inclusion in DFFITS results for influental points likely stems from it having extreme predictor values since it was marked as a high leverage point. But since it did not show to be an outlier, meaning it can likely be kept in our model.
 
