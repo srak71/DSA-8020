@@ -5,6 +5,7 @@ output:
   pdf_document:
     toc: true
     toc_depth: 3
+    latex_engine: xelatex
 ---
 
 ```{r setup, include=FALSE}
@@ -71,11 +72,15 @@ data <- data %>%
 summary(data)
 
 # graphing summary
-par(mfrow=c(2, 3))
-barplot(table(data$rank), main = "Barplot of Rank", xlab = "Rank", ylab = "Freq", names.arg = c("AssProf", "AssocProf", "Prof"))
-barplot(table(data$discipline), main = "Barplot of Disciplines", xlab = "Discipline", ylab = "Freq")
+#par(mfrow=c(2, 3))
+barplot(table(data$rank), main = "Barplot of Rank", xlab = "Rank", ylab = "Freq",
+        names.arg = c("AssistantP", "AssociateP", "Professor"), 
+        col = c("yellow", "orange", "red"))
+barplot(table(data$discipline), main = "Barplot of Disciplines", xlab = "Discipline",
+        ylab = "Freq", names.arg = c("A", "B"))
 hist(data$yrs.since.phd, main = "Histogram of Years Since PHD", xlab = "Yrs")
-barplot(table(data$sex), main = "Stacked Barplot of Sex", xlab = "Sex", ylab = "Freq", names.arg = c("Female", "Male"), col = c("pink", "lightblue"))
+barplot(table(data$sex), main = "Stacked Barplot of Sex", xlab = "Sex", 
+        ylab = "Freq", names.arg = c("Female", "Male"), col = c("pink", "lightblue"))
 boxplot(data$salary, main = "Boxplot of Salary", ylab = "Salary ($)")
 ```
 
@@ -200,20 +205,60 @@ $\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 46032.55 \times (Prof)
 
 ---
 
-5. State the model assumptions in the previous regression model
-
+5. State the model assumptions in the previous regression model.
 
 **Answer:**
+
+- Linear
+
+> Dependent var (salary) and independent vars (remaining 4 vars) should have linear relationship.
+
+- Independence
+
+> Residuals assumed to be independent, obervations should not affect each other.
+
+- Homoscedasticity
+
+> Varience of residuals must be constant across independent vars
+
+- Normality of Residuals
+
+> Residuals should have a normal distributions.
+
+- No Multicolinearity
+
+> Independent vars should not have high correlation with each other.
+
+---
 
 6. Now fit another MLR with \texttt{yrs.since.phd}, \texttt{discipline}, \texttt{sex} and their interactions. Write down the fitted regression equations for each category
 
 **Code:**
 
 ```{r}
-
+interact_model <- lm(salary ~ yrs.since.phd * discipline * sex, data = Salaries)
+summary(interact_model)
 ```
 
 **Answer:**
+
+1. \textbf{Female, Theoretical}
+
+$\hat{salary} = 66195.4 + 1306.8 \times (yrs.since.phd)$
+
+2. \textbf{Female, Applied}
+
+$\hat{salary} = 66195.4 + 1306.8 \times (yrs.since.phd) + 2677.9 + 1397.1 \times (yrs.since.phd)$
+
+3. \textbf{Male, Theoretical}
+
+$\hat{salary} = 66195.4 + 1306.8 \times (yrs.since.phd) + 22688.4 − 475.8 \times (yrs.since.phd)$
+
+4. \textbf{Male, Applied}
+
+$\hat{salary} = 66195.4 + 1306.8 \times (yrs.since.phd) + 2677.9 + 22688.4 + 1397.1 \times (yrs.since.phd) - 475.8 (yrs.since.phd) + 2194$
+
+---
 
 ## Non-linear Regression: An Simulated Example
 
@@ -244,26 +289,90 @@ legend("topright", legend = c("Data", "True"), pch = c(16, NA), lty = c(NA, 1),
 **Code:**
 
 ```{r}
+alpha_0 <- 10
+beta_0 <- 1
 
+nonlinear_fit <- nls(y ~ alpha * exp(-beta * t), data = data, 
+                     start = list(alpha = alpha_0, beta = beta_0))
+summary(nonlinear_fit)
+
+alpha_hat <- coef(nonlinear_fit)['alpha']
+beta_hat <- coef(nonlinear_fit)['beta']
+
+# residual varience
+res <- residuals(nonlinear_fit)
+sigma_hat_sq <- var(res)
+
+# estimated vals
+print(c("Estimated alpha:", alpha_hat))
+print(c("Estimated beta:", beta_hat))
+print(c("Estimated sigma squared:", sigma_hat_sq))
+```
+
+```{r}
+# plotting estimated curve
+plot(t, y, las = 1, pch = 16, main = "Nonlinear Least Squares Fit")
+lines(t, alpha_hat * exp(-beta_hat * t), col = "orange", lwd = 2)
+lines(t, 15 * exp(-2 * t), col = "blue", lwd = 2, lty = 2) # to compare
+legend("topright", legend = c("Data", "Estimated", "True"), 
+       pch = c(16, NA, NA), lty = c(NA, 1, 2), 
+       col = c("black", "orange", "blue"), bty = "n")
 ```
 
 **Answer:**
 
+Estimated values:
+
+$\hat{\alpha} = 15.0962242708225, \hat{\beta} = 2.0113176, \hat{\sigma}^2 = 0.0765514384$
+
+Estimate equation:
+
+$\hat{y} = 15.0962 e^{-2.011376t} + \epsilon, \quad \epsilon \sim N(0, 0.07655)$
+
+---
+
 8. Write down the fitted equation and the estimated variance $\hat{\sigma}^2$  
 
 **Answer:**
+
+Fitted Equation
+$\hat{y} = 15.0962 e^{-2.011376t} + \epsilon, \quad \epsilon \sim N(0, 0.07655)$
+
+Estimated Variance
+$\hat{\sigma}^2 = 0.07655$
+
+---
 
 9. Apply the natural log transformation to the simulated response, then fit a simple linear regression. Back-transform to obtain the fit on the original scale
 
 **Code:**
 
 ```{r}
+# simple linear reg
+linear_fit <- lm(log(y) ~ t, data = data)
+summary(linear_fit)
 
+# coeff
+alpha_log <- exp(coef(linear_fit)[1])
+beta_log <- -coef(linear_fit)[2]
+
+# back transform
+plot(t, y, pch = 16, main = "Log-Transformed Linear Fit (Back-Transformed)")
+lines(t, alpha_log * exp(-beta_log * t), col = "red", lwd = 2)
 ```
 
 **Answer:**
+
+- Nonlinear Model
+
+$ln(y) = ln(\alpha) - \beta t + \epsilon', \epsilon'  \sim N(0, \sigma'^2)$
+
+---
 
 10. Comparing the nonlinear regression method and the linear regression with log-transformed response, which method would you prefer in this example? Explain your answer
 
 **Answer:**
 
+- NLS as it can give parameter estimates with greater accuracy without being affected by transformations.
+
+---
