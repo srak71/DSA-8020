@@ -53,26 +53,32 @@ Categorical Vars
 
 > rank, discipline, sex
 
+---
+
 2. Summarize each variable numerically and graphically, briefly describe your findings
 
 **Code:**
 
 ```{r}
+vars <- c("rank", "discipline", "yrs.since.phd", "sex", "salary")
+data <- Salaries[, vars]
+data <- data %>%
+  mutate(rank = as.numeric(rank),
+         discipline = as.numeric(discipline),
+         sex = as.numeric(sex))
+
 # numerical summary
-summary(Salaries$rank)
-summary(Salaries$discipline)
-summary(Salaries$yrs.since.phd)
-summary(Salaries$sex)
-summary(Salaries$salary)
+summary(data)
 
 # graphing summary
 par(mfrow=c(2, 3))
-barplot(table(Salaries$rank), main = "Barplot of Rank", xlab = "Rank", ylab = "Freq", names.arg = c("AssProf", "AssocProf", "Prof"))
-barplot(table(Salaries$discipline), main = "Barplot of Disciplines", xlab = "Discipline", ylab = "Freq")
-hist(Salaries$yrs.since.phd, main = "Histogram of Years Since PHD", xlab = "Yrs")
-barplot(table(Salaries$sex), main = "Stacked Barplot of Sex", xlab = "Sex", ylab = "Freq", names.arg = c("Female", "Male"), col = c("pink", "lightblue"))
-boxplot(Salaries$salary, main = "Boxplot of Salary", ylab = "Salary ($)")
+barplot(table(data$rank), main = "Barplot of Rank", xlab = "Rank", ylab = "Freq", names.arg = c("AssProf", "AssocProf", "Prof"))
+barplot(table(data$discipline), main = "Barplot of Disciplines", xlab = "Discipline", ylab = "Freq")
+hist(data$yrs.since.phd, main = "Histogram of Years Since PHD", xlab = "Yrs")
+barplot(table(data$sex), main = "Stacked Barplot of Sex", xlab = "Sex", ylab = "Freq", names.arg = c("Female", "Male"), col = c("pink", "lightblue"))
+boxplot(data$salary, main = "Boxplot of Salary", ylab = "Salary ($)")
 ```
+
 
 **Answer:**
 
@@ -97,15 +103,35 @@ Salary
 
 > Salaries range from $57k to $231k, with a median of $107k and an average salary of $113k.
 
+---
+
 3. Create a scatterplot matrix and briefly describe your findings
 
 **Code:**
 
 ```{r}
-pairs(Salaries[, c("salary", "yrs.since.phd")], main = "Scatterplot Matrix")
+pairs(data, main = "Scatterplot", col = "blue")
 ```
 
 **Answer:**
+
+- rank, discipline, sex
+
+> These categorical vars are not well represented in a scatterplot. 
+
+- yrs.since.phd vs salary
+
+> Clear positive correlation, higher salary with more years since phd.
+
+- rank vs salary
+
+> Slightly linear association indicating higher rank correlates with higher salary.
+
+- sex vs salary
+
+> ANOVA must be used to determine if there is significant difference in salaries between genders.
+
+---
 
 ### Model Fitting
 
@@ -114,10 +140,65 @@ pairs(Salaries[, c("salary", "yrs.since.phd")], main = "Scatterplot Matrix")
 **Code:**
 
 ```{r}
-
+model <- lm(salary ~ yrs.since.phd + discipline + rank + sex, data = Salaries)
+summary(model)
 ```
 
 **Answer:**
+
+- Fitted equation for salary
+
+$\hat{salary} = 67884.32 + 61.01 * (yrs.since.phd) + 13937.47*(disciplineB) + 13104.15*(AssocProf) + 46032.55*(Prof) + 4349.37*(Male)$
+
+1. \textbf{Female, Assistant, Theoretical}
+
+$\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd)$
+
+2. \textbf{Female, Assistant, Applied}
+
+$\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 13937.47 \times (disciplineB)$
+
+3. \textbf{Female, Associate, Theoretical}
+
+$\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 13104.15 \times (AssocProf)$
+
+4. \textbf{Female, Associate, Applied}
+
+$\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 13104.15 \times (AssocProf) + 13937.47 \times (disciplineB)$
+
+5. \textbf{Female, Full, Theoretical}
+
+$\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 46032.55 \times (Prof)$
+
+6. \textbf{Female, Full, Applied}
+
+$\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 46032.55 \times (Prof) + 13937.47 \times (disciplineB)$
+
+7. \textbf{Male, Assistant, Theoretical}
+
+$\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 4349.37 \times (Male)$
+
+8. \textbf{Male, Assistant, Applied}
+
+$\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 13937.47 \times (disciplineB) + 4349.37 \times (Male)$
+
+9. \textbf{Male, Associate, Theoretical}
+
+$\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 13104.15 \times (AssocProf) + 4349.37 \times (Male)$
+
+10. \textbf{Male, Associate, Applied}
+
+$\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 13104.15 \times (AssocProf) + 13937.47 \times (disciplineB) + 4349.37 \times (Male)$
+
+11. \textbf{Male, Full, Theoretical}
+
+$\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 46032.55 \times (Prof) + 4349.37 \times (Male)$
+
+12. \textbf{Male, Full, Applied}
+
+$\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 46032.55 \times (Prof) + 13937.47 \times (disciplineB) + 4349.37 \times (Male)$
+
+---
 
 5. State the model assumptions in the previous regression model
 
