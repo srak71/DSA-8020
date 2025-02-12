@@ -1,6 +1,6 @@
 ---
 title: "DSA 8020 R Lab 5: Analysis of covariance and Non-linear Regression"
-author: "your name here"
+author: "saransh rakshak"
 output:
   pdf_document:
     toc: true
@@ -22,6 +22,7 @@ The 2008-09 nine-month academic salary for Assistant Professors, Associate Profe
 
 ```{r}
 library(carData)
+library(dplyr)
 data(Salaries)
 head(Salaries)
 ```
@@ -44,22 +45,64 @@ head(Salaries)
 
 **Answer:**
 
+Numerical Vars
+
+> yrs.since.phd, salary
+
+Categorical Vars
+
+> rank, discipline, sex
+
 2. Summarize each variable numerically and graphically, briefly describe your findings
 
 **Code:**
 
 ```{r}
+# numerical summary
+summary(Salaries$rank)
+summary(Salaries$discipline)
+summary(Salaries$yrs.since.phd)
+summary(Salaries$sex)
+summary(Salaries$salary)
 
+# graphing summary
+par(mfrow=c(2, 3))
+barplot(table(Salaries$rank), main = "Barplot of Rank", xlab = "Rank", ylab = "Freq", names.arg = c("AssProf", "AssocProf", "Prof"))
+barplot(table(Salaries$discipline), main = "Barplot of Disciplines", xlab = "Discipline", ylab = "Freq")
+hist(Salaries$yrs.since.phd, main = "Histogram of Years Since PHD", xlab = "Yrs")
+barplot(table(Salaries$sex), main = "Stacked Barplot of Sex", xlab = "Sex", ylab = "Freq", names.arg = c("Female", "Male"), col = c("pink", "lightblue"))
+boxplot(Salaries$salary, main = "Boxplot of Salary", ylab = "Salary ($)")
 ```
 
 **Answer:**
+
+Rank
+
+> There are more full professors than assistant or associate professors. 
+
+Discipline
+
+> Both A and B seem mostly balanced, with B having slightly greater occurances.
+
+yrs.since.phd
+
+> Most staff have between 10 and 40 years of elapsed time since their PhD.
+> Distribution has slight right skew, with very few staff having 50 or more years since their PhD.
+
+Sex
+
+> Highly imbalanced, with Males greatly dominating the staff roster.
+
+Salary
+
+> Salaries range from $57k to $231k, with a median of $107k and an average salary of $113k.
 
 3. Create a scatterplot matrix and briefly describe your findings
 
 **Code:**
 
 ```{r}
-
+pairs(Salaries[, c("salary", "yrs.since.phd")], main = "Scatterplot Matrix")
 ```
 
 **Answer:**
