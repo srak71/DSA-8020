@@ -1,10 +1,11 @@
 ---
 title: 'DSA 8020 R Lab 3: Multiple Linear Regression II'
-author: "your name here"
+author: "saransh rakshak"
 output:
   pdf_document:
     toc: true
     toc_depth: 3
+    latex_engine: xelatex
 ---
 
 ```{r setup, include=FALSE}
@@ -54,6 +55,7 @@ vars <- c("brozek", "age", "weight", "height", "chest", "abdom")
 data <- fat[, vars]
 ```
 
+---
  
 ## Exploratory Data Analysis
 
@@ -64,8 +66,10 @@ data <- fat[, vars]
 **Code:**
 
 ```{r}
-
+summary(data)
 ```
+
+---
 
 ### Graphical summary
 
@@ -74,21 +78,58 @@ data <- fat[, vars]
 **Code:**
 
 ```{r}
-
+par(mfrow = c(2, 3))
+for (var in vars) {
+  boxplot(data[[var]], main = var, col = "lightblue")
+}
 ```
+
+---
 
 3. Briefly discuss the shape of the distribution of each variable
 
 **Answer:**
 
+Brozek 
+
+- Slight right skew.
+- Few high outliers on upper end.
+
+Age
+
+- Distribution appears symetrical.
+
+Weight
+
+- Right-skewed distribution.
+- Few high-value outliers.
+
+Height
+
+- Approximately symmetric.
+- Single outlier on lower end.
+
+Chest
+
+- Right skew.
+- Few high value outliers.
+
+Abdomen
+
+- Right skew.
+- Multiple high value outliers.
+
+---
 
 4. Create a scatterplot matrix to explore the inter-dependence between these variables 
 
 **Code:**
 
 ```{r}
-
+pairs(data, main = "Scatterplot", col = "blue")
 ```
+
+---
 
 ## General Linear F-Test
 
@@ -98,37 +139,61 @@ Suppose a researcher would like to compare the "Full" model using all the 5 pred
 
 **Answer:**
 
+Null Hypothesis ($H_{0}$)
+
+> The additional predictors do not improve the model, thus reduced model fits the data as well as the full.
+
+Alt Hypothesis ($H_{1}$)
+
+> The full model greatly fits the data better than the reduced model, showing that the additional predictors are vital.
+
+---
+
 6. Fit the full model and write down the fitted linear regression equation.
 
 **Code:**
 
 ```{r}
-
+full_model <- lm(brozek ~ age + weight + height + chest + abdom, data = data)
+summary(full_model)
 ```
 
-
-
 **Answer:**
+
+$\hat{brozek} = \beta_0 + \beta_1 * age + \beta_2 * weight + \beta_3 * height + \beta_4 * chest + \beta_5 * abdomen$
+
+---
 
 7. Fit the reduced model and write down the fitted linear regression equation.
 
 **Code:**
 
 ```{r}
-
+reduced_model <- lm(brozek ~ age + abdom, data = data)
+summary(reduced_model)
 ```
 
 **Answer:**
+
+$\hat{brozek} = \beta_0 + \beta_1 * age + \beta_2 * abdomen$
+
+---
+
 
 8. Perform a general linear F-test and state the conclusion at $\alpha = 0.05$
 
 **Code:**
 
 ```{r}
-
+anova(reduced_model, full_model)
 ```
 
 **Answer:**
+
+We reject null hypothesis as p-value of 1.543e-08 much lower than our significance level alpha = 0.05.
+
+
+---
 
 ## Prediction
 
@@ -137,22 +202,27 @@ Suppose a researcher would like to compare the "Full" model using all the 5 pred
 **Code:**
 
 ```{r}
-
+new_data <- data.frame(age = 54, weight = 197, height = 72.25, chest = 105.375, abdom = 99.325)
+predict(full_model, newdata = new_data, interval = "prediction", level = 0.95)
 ```
 
 
 **Answer:**
 
-10. Construct a 95% confidence interval for the mean response of percent body fat
- with \texttt{age} $=54$, \texttt{weight} $=197$, \texttt{height} $=72.25$, \texttt{chest} $=105.375$, and \texttt{abdom} $= 99.325$.
+For a patient with these characteristics, we can expect a body fat percentage of 22.4%.
+
+---
+
+10. Construct a 95% confidence interval for the mean response of percent body fat with \texttt{age} $=54$, \texttt{weight} $=197$, \texttt{height} $=72.25$, \texttt{chest} $=105.375$, and \texttt{abdom} $= 99.325$.
  
  **Code:**
 
 ```{r}
-
+predict(full_model, newdata = new_data, interval = "confidence", level = 0.95)
 ```
  
- 
+---
+
 ## Multicollinearity
 
 
@@ -161,23 +231,35 @@ Suppose a researcher would like to compare the "Full" model using all the 5 pred
 **Code:**
 
 ```{r}
-
+pairs(data, main = "Scatterplot Matrix")
+cor(data)
 ```
 
-
-
+---
 
 12. Calculate VIF and briefly discuss your finding
 
 **Code:**
 
 ```{r}
-
+vif(full_model)
 ```
 
 **Answer:**
 
+No Multicollinearity:
 
+- Age (1.42)
+- Height (1.37)
+
+Moderate Multicollinearity:
+
+- Chest (7.98)
+
+Severe Multicollinearity:
+
+- Abdoment (9.38)
+- Weight (10.05)
 
 
 
