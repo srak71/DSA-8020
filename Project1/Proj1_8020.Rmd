@@ -255,7 +255,7 @@ qqline(residuals(bc_sqrt_model))
 
 - Both plots show significant improvements over our original model. There is significantly less spread in Residuals as well as a more linear relationship in our QQ plot. 
 
-- Residual plots for both models(original and transformed) showed no significant patterns or heteroscedasticity; transformation doesn't violate assumptions of linear  regression.
+- Residual plots for both models(original and transformed) showed no significant patterns or heteroscedasticity; transformation doesn't violate assumptions of linear regression.
 
 
 ---
@@ -298,7 +298,7 @@ dev_explained_gam <- 1 - (gam_dev / null_gam_dev)
 dev_explained_gam
 ```
 
-- There is a considerable improvement in deviance explained by the GAM model, 0.97 vs 0.94 with our Box-Cox transformation only.
+- There is a considerable improvement in deviance explained by the GAM model, 0.98 vs 0.94 with our Box-Cox transformation only.
 
 - This confirms the GAM model to better fit the data and be the optimal choice.
 
@@ -311,14 +311,13 @@ qqnorm(residuals(gam_model))
 qqline(residuals(gam_model))
 ```
 
-- in
+- 
 
 
 
 ```{r}
 summary(gam_model)
 ```
-
 
 
 - Our QQ plots show our residuals to be normally distributed, showing no violation in model assumptions.
