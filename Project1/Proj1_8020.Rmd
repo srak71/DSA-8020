@@ -46,6 +46,7 @@ data(gala)
 
 # Excluding Species from analysis
 gala <- subset(gala, select = -Species)
+
 head(gala)
 ```
 
@@ -152,36 +153,46 @@ ggplot(gala, aes(x = Adjacent)) +
 
 **Answer:**
 
-- Endemics: Our response variable, Endemics, shows high variability with a large range (0 to 95). This indicates either that there is either a diverse and varying degrees of endemics in species observations.
+- (Endemics): Our response variable, Endemics, shows high variability with a large range (0 to 95). This indicates either that there is either a diverse and varying degrees of endemics in species observations. Our plot shows Endemics to appear right-skewed, showing that some islands have significantly more endemic species than others.
 
-- Area, Adjacent: Both variables show significant variation, with a high max compared to mean values, and show right-skewed distributions. This suggest potential outliers confirmed on the distribution graphs. 
+- (Area, Adjacent): Both variables show significant variation, with a high max compared to mean values, and show right-skewed distributions. This suggest potential outliers confirmed on the distribution graphs. 
 
-- Scruz: Also shows moderately high variation, outliers can be seen in distribution graph however the presence of multiple values supports theory that these outliers are infact significant values, as opposed to what we saw with Area & Adjacent.
+- (Scruz): Also shows moderately high variation, outliers can be seen in distribution graph however the presence of multiple values supports theory that these outliers are in fact significant values, as opposed to what we saw with Area & Adjacent.
+
+- (Elevation, Nearest): Both show more balanced distributions compared to our other variables, but still their values lie in a wide range.
 
 ---
 
 ## 2. Is at least one of the predictors useful in predicting the response (Endemics)?
+
+Establishing an alpha ($\alpha$) value of 0.05. 
 
 **Code:**
 ```{r}
 # getting p-vals
 model <- lm(Endemics ~ Area + Elevation + Nearest + Scruz + Adjacent, data = gala)
 summary(model)
+# corelation
+cor(gala[, c("Area", "Elevation", "Nearest", "Scruz", "Adjacent")], gala["Endemics"])
 
+# Checking model assumptions
 # residual vs fitted
 plot(model, which = 1)
 
 # qq plot
 qqnorm(resid(model))
 qqline(residuals(model))
-
-# corelation
-cor(gala[, c("Area", "Elevation", "Nearest", "Scruz", "Adjacent")], gala["Endemics"])
 ```
 
 **Answer:**
 
-- Allowing an alpha of 0.05, we can see that Elevation (p-val: 5.83e-08) and Adjacent (p-val: 5.50e-05) are useful in predicting the response (Endemics).
+Allowing an $\alpha = 0.05$, we can see that...
+
+- Elevation (p-val: 5.83e-08) and Adjacent (p-val: 5.50e-05) are useful in predicting the response (Endemics).
+
+- Area (p-val: 0.0732) is slightly above our alpha 0.05, suggesting that Area has some predictive value but is not statistically significant.
+
+- Scruz (p-val: 0.2044) and Nearest (p-val: 0.9066) have little to no meaningful relationship with Endemics that can be leveraged in prediction. 
 
 
 ---
@@ -195,20 +206,23 @@ stepmodel <- stepAIC(model, direction = "both")
 summary(stepmodel)
 ```
 
-
 **Answer:**
 
-- Using stepwise AIC selection, we can get a final optimal model of
+- Using step-wise AIC selection, we can get a final optimal model composed of variables...
 
+    - Adjacent: (p-val: 2.01e-05) shows to be highly significant in explaining the number of endemic species.
+    
+    - Elevation: (p-val: 1.73e-08) shows to be highly significant in explaining the number of endemic species.
+    
+    - Area: (p-val: 0.0591) is borderline insignificant at our alpha = 0.05 but can still be slightly useful in a less strict model.
+    
+    - Scruz: (p-val: 0.1201) is not statistically significant at our alpha = 0.05, and will not help much in predicting the response.
+    
+- Our step-wise AIC removed variable Nearest as it was shown to increase AIC, reducing response prediction in our final model.
+
+In summation, all variables were not useful in predicting the response, and variable Nearest was removed using step-wise AIC, giving a new optimized model with:
+    
 > Endemics ~ Area + Elevation + Scruz + Adjacent
-
-    - Area: 
-    
-    - Elevation:
-    
-    - Scruz:
-    
-    - Adjacent:
     
 ---
 
@@ -216,13 +230,15 @@ summary(stepmodel)
 
 **Code:**
 ```{r}
-# summary(gala)
-gala$Endemics <- gala$Endemics + 0.01  # to avoid 0.00 stopping boxcox()
+# to avoid 0.00value stopping boxcox(), shifting by insignificant amount
+gala$Endemics <- gala$Endemics + 0.000001
+
+# boxcox of stepwise AIC optimized model
 bc <- boxcox(stepmodel)
 plot(bc)
 ```
 
-- As we get an approximate $\lambda$ value of near 0.5, I will apply a square root transformation to our response.
+- As we get an approximate $\lambda$ value of near 0.5, I will apply a square root transformation to our response variable Endemics.
 
 ```{r}
 bc_sqrt_endemics <- sqrt(gala$Endemics)
