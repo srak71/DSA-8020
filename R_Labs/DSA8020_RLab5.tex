@@ -1,0 +1,983 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\documentclass[
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={DSA 8020 R Lab 5: Analysis of covariance and Non-linear Regression},
+  pdfauthor={saransh rakshak},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{DSA 8020 R Lab 5: Analysis of covariance and Non-linear
+Regression}
+\author{saransh rakshak}
+\date{}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{3}
+\tableofcontents
+}
+\subsection{Analysis of covariance: Salaries for
+Professors}\label{analysis-of-covariance-salaries-for-professors}
+
+The 2008-09 nine-month academic salary for Assistant Professors,
+Associate Professors, and Professors in a college in the U.S. was
+collected as part of the ongoing effort of the college's administration
+to monitor salary differences between male and female faculty members.
+
+\subsubsection{Load the dataset}\label{load-the-dataset}
+
+\textbf{Code:}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(carData)}
+\FunctionTok{library}\NormalTok{(dplyr)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Attaching package: 'dplyr'
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{data}\NormalTok{(Salaries)}
+\FunctionTok{head}\NormalTok{(Salaries)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##        rank discipline yrs.since.phd yrs.service  sex salary
+## 1      Prof          B            19          18 Male 139750
+## 2      Prof          B            20          16 Male 173200
+## 3  AsstProf          B             4           3 Male  79750
+## 4      Prof          B            45          39 Male 115000
+## 5      Prof          B            40          41 Male 141500
+## 6 AssocProf          B             6           6 Male  97000
+\end{verbatim}
+
+\textbf{Description of the variables}
+
+\begin{itemize}
+\item
+  \texttt{rank}: a factor with levels Assistant Professor
+  (``AsstProf''); Associate Professor (``AssocProf''); Full Professor
+  (``Prof'')
+\item
+  \texttt{discipline}: a factor with levels A (``theoretical''
+  departments) or B (``applied'' departments)
+\item
+  \texttt{yrs.since.phd}: years since her/his PhD
+\item
+  \texttt{sex}: a factor with levels ``Female'' and ``Male''
+\item
+  \texttt{salary}: nine-month salary, in dollars
+\end{itemize}
+
+\subsubsection{Exploratory Data
+Analysis}\label{exploratory-data-analysis}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Identify the numerical variables and categorical variables in this
+  data set
+\end{enumerate}
+
+\textbf{Answer:}
+
+Numerical Vars
+
+\begin{quote}
+yrs.since.phd, salary
+\end{quote}
+
+Categorical Vars
+
+\begin{quote}
+rank, discipline, sex
+\end{quote}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{1}
+\tightlist
+\item
+  Summarize each variable numerically and graphically, briefly describe
+  your findings
+\end{enumerate}
+
+\textbf{Code:}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{vars }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"rank"}\NormalTok{, }\StringTok{"discipline"}\NormalTok{, }\StringTok{"yrs.since.phd"}\NormalTok{, }\StringTok{"sex"}\NormalTok{, }\StringTok{"salary"}\NormalTok{)}
+\NormalTok{data }\OtherTok{\textless{}{-}}\NormalTok{ Salaries[, vars]}
+\NormalTok{data }\OtherTok{\textless{}{-}}\NormalTok{ data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{rank =} \FunctionTok{as.numeric}\NormalTok{(rank),}
+         \AttributeTok{discipline =} \FunctionTok{as.numeric}\NormalTok{(discipline),}
+         \AttributeTok{sex =} \FunctionTok{as.numeric}\NormalTok{(sex))}
+
+\CommentTok{\# numerical summary}
+\FunctionTok{summary}\NormalTok{(data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       rank         discipline    yrs.since.phd        sex       
+##  Min.   :1.000   Min.   :1.000   Min.   : 1.00   Min.   :1.000  
+##  1st Qu.:2.000   1st Qu.:1.000   1st Qu.:12.00   1st Qu.:2.000  
+##  Median :3.000   Median :2.000   Median :21.00   Median :2.000  
+##  Mean   :2.501   Mean   :1.544   Mean   :22.31   Mean   :1.902  
+##  3rd Qu.:3.000   3rd Qu.:2.000   3rd Qu.:32.00   3rd Qu.:2.000  
+##  Max.   :3.000   Max.   :2.000   Max.   :56.00   Max.   :2.000  
+##      salary      
+##  Min.   : 57800  
+##  1st Qu.: 91000  
+##  Median :107300  
+##  Mean   :113706  
+##  3rd Qu.:134185  
+##  Max.   :231545
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# graphing summary}
+\CommentTok{\#par(mfrow=c(2, 3))}
+\FunctionTok{barplot}\NormalTok{(}\FunctionTok{table}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{rank), }\AttributeTok{main =} \StringTok{"Barplot of Rank"}\NormalTok{, }\AttributeTok{xlab =} \StringTok{"Rank"}\NormalTok{, }\AttributeTok{ylab =} \StringTok{"Freq"}\NormalTok{,}
+        \AttributeTok{names.arg =} \FunctionTok{c}\NormalTok{(}\StringTok{"AssistantP"}\NormalTok{, }\StringTok{"AssociateP"}\NormalTok{, }\StringTok{"Professor"}\NormalTok{), }
+        \AttributeTok{col =} \FunctionTok{c}\NormalTok{(}\StringTok{"yellow"}\NormalTok{, }\StringTok{"orange"}\NormalTok{, }\StringTok{"red"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{DSA8020_RLab5_files/figure-latex/unnamed-chunk-2-1.pdf}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{barplot}\NormalTok{(}\FunctionTok{table}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{discipline), }\AttributeTok{main =} \StringTok{"Barplot of Disciplines"}\NormalTok{, }\AttributeTok{xlab =} \StringTok{"Discipline"}\NormalTok{,}
+        \AttributeTok{ylab =} \StringTok{"Freq"}\NormalTok{, }\AttributeTok{names.arg =} \FunctionTok{c}\NormalTok{(}\StringTok{"A"}\NormalTok{, }\StringTok{"B"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{DSA8020_RLab5_files/figure-latex/unnamed-chunk-2-2.pdf}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{hist}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{yrs.since.phd, }\AttributeTok{main =} \StringTok{"Histogram of Years Since PHD"}\NormalTok{, }\AttributeTok{xlab =} \StringTok{"Yrs"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{DSA8020_RLab5_files/figure-latex/unnamed-chunk-2-3.pdf}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{barplot}\NormalTok{(}\FunctionTok{table}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{sex), }\AttributeTok{main =} \StringTok{"Stacked Barplot of Sex"}\NormalTok{, }\AttributeTok{xlab =} \StringTok{"Sex"}\NormalTok{, }
+        \AttributeTok{ylab =} \StringTok{"Freq"}\NormalTok{, }\AttributeTok{names.arg =} \FunctionTok{c}\NormalTok{(}\StringTok{"Female"}\NormalTok{, }\StringTok{"Male"}\NormalTok{), }\AttributeTok{col =} \FunctionTok{c}\NormalTok{(}\StringTok{"pink"}\NormalTok{, }\StringTok{"lightblue"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{DSA8020_RLab5_files/figure-latex/unnamed-chunk-2-4.pdf}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{boxplot}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{salary, }\AttributeTok{main =} \StringTok{"Boxplot of Salary"}\NormalTok{, }\AttributeTok{ylab =} \StringTok{"Salary ($)"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{DSA8020_RLab5_files/figure-latex/unnamed-chunk-2-5.pdf}}
+
+\textbf{Answer:}
+
+Rank
+
+\begin{quote}
+There are more full professors than assistant or associate professors.
+\end{quote}
+
+Discipline
+
+\begin{quote}
+Both A and B seem mostly balanced, with B having slightly greater
+occurances.
+\end{quote}
+
+yrs.since.phd
+
+\begin{quote}
+Most staff have between 10 and 40 years of elapsed time since their PhD.
+Distribution has slight right skew, with very few staff having 50 or
+more years since their PhD.
+\end{quote}
+
+Sex
+
+\begin{quote}
+Highly imbalanced, with Males greatly dominating the staff roster.
+\end{quote}
+
+Salary
+
+\begin{quote}
+Salaries range from \$57k to \$231k, with a median of \$107k and an
+average salary of \$113k.
+\end{quote}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{2}
+\tightlist
+\item
+  Create a scatterplot matrix and briefly describe your findings
+\end{enumerate}
+
+\textbf{Code:}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{pairs}\NormalTok{(data, }\AttributeTok{main =} \StringTok{"Scatterplot"}\NormalTok{, }\AttributeTok{col =} \StringTok{"blue"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{DSA8020_RLab5_files/figure-latex/unnamed-chunk-3-1.pdf}}
+
+\textbf{Answer:}
+
+\begin{itemize}
+\tightlist
+\item
+  rank, discipline, sex
+\end{itemize}
+
+\begin{quote}
+These categorical vars are not well represented in a scatterplot.
+\end{quote}
+
+\begin{itemize}
+\tightlist
+\item
+  yrs.since.phd vs salary
+\end{itemize}
+
+\begin{quote}
+Clear positive correlation, higher salary with more years since phd.
+\end{quote}
+
+\begin{itemize}
+\tightlist
+\item
+  rank vs salary
+\end{itemize}
+
+\begin{quote}
+Slightly linear association indicating higher rank correlates with
+higher salary.
+\end{quote}
+
+\begin{itemize}
+\tightlist
+\item
+  sex vs salary
+\end{itemize}
+
+\begin{quote}
+ANOVA must be used to determine if there is significant difference in
+salaries between genders.
+\end{quote}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsubsection{Model Fitting}\label{model-fitting}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{3}
+\tightlist
+\item
+  Fit a multiple linear regression model (MLR) with
+  \texttt{yrs.since.phd}, \texttt{discipline}, \texttt{rank}, and
+  \texttt{sex} as predictors. Write down the fitted regression equations
+  for each category (e.g., Female, Assistant Professor, theoretical
+  departments). There are 12 categories in total
+\end{enumerate}
+
+\textbf{Code:}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{model }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(salary }\SpecialCharTok{\textasciitilde{}}\NormalTok{ yrs.since.phd }\SpecialCharTok{+}\NormalTok{ discipline }\SpecialCharTok{+}\NormalTok{ rank }\SpecialCharTok{+}\NormalTok{ sex, }\AttributeTok{data =}\NormalTok{ Salaries)}
+\FunctionTok{summary}\NormalTok{(model)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = salary ~ yrs.since.phd + discipline + rank + sex, 
+##     data = Salaries)
+## 
+## Residuals:
+##    Min     1Q Median     3Q    Max 
+## -67451 -13860  -1549  10716  97023 
+## 
+## Coefficients:
+##               Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)   67884.32    4536.89  14.963  < 2e-16 ***
+## yrs.since.phd    61.01     127.01   0.480  0.63124    
+## disciplineB   13937.47    2346.53   5.940 6.32e-09 ***
+## rankAssocProf 13104.15    4167.31   3.145  0.00179 ** 
+## rankProf      46032.55    4240.12  10.856  < 2e-16 ***
+## sexMale        4349.37    3875.39   1.122  0.26242    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 22660 on 391 degrees of freedom
+## Multiple R-squared:  0.4472, Adjusted R-squared:  0.4401 
+## F-statistic: 63.27 on 5 and 391 DF,  p-value: < 2.2e-16
+\end{verbatim}
+
+\textbf{Answer:}
+
+\begin{itemize}
+\tightlist
+\item
+  Fitted equation for salary
+\end{itemize}
+
+\(\hat{salary} = 67884.32 + 61.01 * (yrs.since.phd) + 13937.47*(disciplineB) + 13104.15*(AssocProf) + 46032.55*(Prof) + 4349.37*(Male)\)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Female, Assistant, Theoretical}
+\end{enumerate}
+
+\(\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd)\)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{1}
+\tightlist
+\item
+  \textbf{Female, Assistant, Applied}
+\end{enumerate}
+
+\(\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 13937.47 \times (disciplineB)\)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{2}
+\tightlist
+\item
+  \textbf{Female, Associate, Theoretical}
+\end{enumerate}
+
+\(\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 13104.15 \times (AssocProf)\)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{3}
+\tightlist
+\item
+  \textbf{Female, Associate, Applied}
+\end{enumerate}
+
+\(\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 13104.15 \times (AssocProf) + 13937.47 \times (disciplineB)\)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{4}
+\tightlist
+\item
+  \textbf{Female, Full, Theoretical}
+\end{enumerate}
+
+\(\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 46032.55 \times (Prof)\)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{5}
+\tightlist
+\item
+  \textbf{Female, Full, Applied}
+\end{enumerate}
+
+\(\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 46032.55 \times (Prof) + 13937.47 \times (disciplineB)\)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{6}
+\tightlist
+\item
+  \textbf{Male, Assistant, Theoretical}
+\end{enumerate}
+
+\(\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 4349.37 \times (Male)\)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{7}
+\tightlist
+\item
+  \textbf{Male, Assistant, Applied}
+\end{enumerate}
+
+\(\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 13937.47 \times (disciplineB) + 4349.37 \times (Male)\)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{8}
+\tightlist
+\item
+  \textbf{Male, Associate, Theoretical}
+\end{enumerate}
+
+\(\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 13104.15 \times (AssocProf) + 4349.37 \times (Male)\)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{9}
+\tightlist
+\item
+  \textbf{Male, Associate, Applied}
+\end{enumerate}
+
+\(\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 13104.15 \times (AssocProf) + 13937.47 \times (disciplineB) + 4349.37 \times (Male)\)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{10}
+\tightlist
+\item
+  \textbf{Male, Full, Theoretical}
+\end{enumerate}
+
+\(\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 46032.55 \times (Prof) + 4349.37 \times (Male)\)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{11}
+\tightlist
+\item
+  \textbf{Male, Full, Applied}
+\end{enumerate}
+
+\(\hat{salary} = 67884.32 + 61.01 \times (yrs.since.phd) + 46032.55 \times (Prof) + 13937.47 \times (disciplineB) + 4349.37 \times (Male)\)
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{4}
+\tightlist
+\item
+  State the model assumptions in the previous regression model.
+\end{enumerate}
+
+\textbf{Answer:}
+
+\begin{itemize}
+\tightlist
+\item
+  Linear
+\end{itemize}
+
+\begin{quote}
+Dependent var (salary) and independent vars (remaining 4 vars) should
+have linear relationship.
+\end{quote}
+
+\begin{itemize}
+\tightlist
+\item
+  Independence
+\end{itemize}
+
+\begin{quote}
+Residuals assumed to be independent, obervations should not affect each
+other.
+\end{quote}
+
+\begin{itemize}
+\tightlist
+\item
+  Homoscedasticity
+\end{itemize}
+
+\begin{quote}
+Varience of residuals must be constant across independent vars
+\end{quote}
+
+\begin{itemize}
+\tightlist
+\item
+  Normality of Residuals
+\end{itemize}
+
+\begin{quote}
+Residuals should have a normal distributions.
+\end{quote}
+
+\begin{itemize}
+\tightlist
+\item
+  No Multicolinearity
+\end{itemize}
+
+\begin{quote}
+Independent vars should not have high correlation with each other.
+\end{quote}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{5}
+\tightlist
+\item
+  Now fit another MLR with \texttt{yrs.since.phd}, \texttt{discipline},
+  \texttt{sex} and their interactions. Write down the fitted regression
+  equations for each category
+\end{enumerate}
+
+\textbf{Code:}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{interact\_model }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(salary }\SpecialCharTok{\textasciitilde{}}\NormalTok{ yrs.since.phd }\SpecialCharTok{*}\NormalTok{ discipline }\SpecialCharTok{*}\NormalTok{ sex, }\AttributeTok{data =}\NormalTok{ Salaries)}
+\FunctionTok{summary}\NormalTok{(interact\_model)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = salary ~ yrs.since.phd * discipline * sex, data = Salaries)
+## 
+## Residuals:
+##    Min     1Q Median     3Q    Max 
+## -83181 -18486  -2710  15015  91016 
+## 
+## Coefficients:
+##                                   Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)                        66195.4    11211.2   5.904 7.72e-09 ***
+## yrs.since.phd                       1306.8      534.3   2.446   0.0149 *  
+## disciplineB                         2677.9    17327.0   0.155   0.8773    
+## sexMale                            22688.4    12136.3   1.869   0.0623 .  
+## yrs.since.phd:disciplineB           1397.1      928.9   1.504   0.1334    
+## yrs.since.phd:sexMale               -475.8      557.4  -0.854   0.3939    
+## disciplineB:sexMale                 2194.0    18294.3   0.120   0.9046    
+## yrs.since.phd:disciplineB:sexMale   -989.3      954.5  -1.036   0.3006    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 26240 on 389 degrees of freedom
+## Multiple R-squared:  0.2626, Adjusted R-squared:  0.2493 
+## F-statistic: 19.79 on 7 and 389 DF,  p-value: < 2.2e-16
+\end{verbatim}
+
+\textbf{Answer:}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Female, Theoretical}
+\end{enumerate}
+
+\(\hat{salary} = 66195.4 + 1306.8 \times (yrs.since.phd)\)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{1}
+\tightlist
+\item
+  \textbf{Female, Applied}
+\end{enumerate}
+
+\(\hat{salary} = 66195.4 + 1306.8 \times (yrs.since.phd) + 2677.9 + 1397.1 \times (yrs.since.phd)\)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{2}
+\tightlist
+\item
+  \textbf{Male, Theoretical}
+\end{enumerate}
+
+\(\hat{salary} = 66195.4 + 1306.8 \times (yrs.since.phd) + 22688.4 − 475.8 \times (yrs.since.phd)\)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{3}
+\tightlist
+\item
+  \textbf{Male, Applied}
+\end{enumerate}
+
+\(\hat{salary} = 66195.4 + 1306.8 \times (yrs.since.phd) + 2677.9 + 22688.4 + 1397.1 \times (yrs.since.phd) - 475.8 (yrs.since.phd) + 2194\)
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Non-linear Regression: An Simulated
+Example}\label{non-linear-regression-an-simulated-example}
+
+Suppose the response \(y\) depends on the predictor \(t\) in the
+following form: \[y = \alpha \exp(-\beta t) + \epsilon,\] where
+\(\epsilon \sim \mathrm{N}(0, \sigma^2)\), and the true \(\alpha\),
+\(\beta\), and \(\sigma^2\) are 15, 2 and 0.16, respectively. First,
+let's simulate some data points from this nonlinear model:
+
+\textbf{Code:}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{alpha }\OtherTok{=} \DecValTok{15}\NormalTok{; beta }\OtherTok{=} \DecValTok{2}\NormalTok{; sigma.sq }\OtherTok{=} \FloatTok{0.09}
+\NormalTok{n }\OtherTok{\textless{}{-}} \DecValTok{50}
+\NormalTok{t }\OtherTok{\textless{}{-}} \FunctionTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{2}\NormalTok{, }\AttributeTok{len =} \DecValTok{50}\NormalTok{)}
+\FunctionTok{set.seed}\NormalTok{(}\DecValTok{123}\NormalTok{)}
+\NormalTok{y }\OtherTok{\textless{}{-}}\NormalTok{ alpha }\SpecialCharTok{*} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{beta }\SpecialCharTok{*}\NormalTok{ t) }\SpecialCharTok{+} \FunctionTok{rnorm}\NormalTok{(n, }\AttributeTok{sd =} \FunctionTok{sqrt}\NormalTok{(sigma.sq))}
+\NormalTok{data }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{y =}\NormalTok{ y, }\AttributeTok{t =}\NormalTok{ t)}
+
+\FunctionTok{plot}\NormalTok{(t, y, }\AttributeTok{las =} \DecValTok{1}\NormalTok{, }\AttributeTok{pch =} \DecValTok{16}\NormalTok{)}
+\FunctionTok{lines}\NormalTok{(t, alpha }\SpecialCharTok{*} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{beta }\SpecialCharTok{*}\NormalTok{ t), }\AttributeTok{type =} \StringTok{"l"}\NormalTok{, }\AttributeTok{col =} \StringTok{"blue"}\NormalTok{)}
+\FunctionTok{legend}\NormalTok{(}\StringTok{"topright"}\NormalTok{, }\AttributeTok{legend =} \FunctionTok{c}\NormalTok{(}\StringTok{"Data"}\NormalTok{, }\StringTok{"True"}\NormalTok{), }\AttributeTok{pch =} \FunctionTok{c}\NormalTok{(}\DecValTok{16}\NormalTok{, }\ConstantTok{NA}\NormalTok{), }\AttributeTok{lty =} \FunctionTok{c}\NormalTok{(}\ConstantTok{NA}\NormalTok{, }\DecValTok{1}\NormalTok{),}
+       \AttributeTok{col =} \FunctionTok{c}\NormalTok{(}\StringTok{"black"}\NormalTok{, }\StringTok{"blue"}\NormalTok{), }\AttributeTok{bty =} \StringTok{"n"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{DSA8020_RLab5_files/figure-latex/unnamed-chunk-6-1.pdf}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{6}
+\tightlist
+\item
+  Use the \texttt{nls} function to obtain nonlinear least-squares
+  estimates \(\hat{\alpha}\), \(\hat{\beta}\), and \(\hat{\sigma}^2\).
+  To use \texttt{nls}, provide formula = y \(\sim\) alpha * exp(-beta *
+  t), start = list(alpha = alpha\_0, beta = beta\_0), where alpha\_0 and
+  beta\_0 are initial guesses of the parameters \(\alpha\) and \(\beta\)
+\end{enumerate}
+
+\textbf{Code:}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{alpha\_0 }\OtherTok{\textless{}{-}} \DecValTok{10}
+\NormalTok{beta\_0 }\OtherTok{\textless{}{-}} \DecValTok{1}
+
+\NormalTok{nonlinear\_fit }\OtherTok{\textless{}{-}} \FunctionTok{nls}\NormalTok{(y }\SpecialCharTok{\textasciitilde{}}\NormalTok{ alpha }\SpecialCharTok{*} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{beta }\SpecialCharTok{*}\NormalTok{ t), }\AttributeTok{data =}\NormalTok{ data, }
+                     \AttributeTok{start =} \FunctionTok{list}\NormalTok{(}\AttributeTok{alpha =}\NormalTok{ alpha\_0, }\AttributeTok{beta =}\NormalTok{ beta\_0))}
+\FunctionTok{summary}\NormalTok{(nonlinear\_fit)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Formula: y ~ alpha * exp(-beta * t)
+## 
+## Parameters:
+##       Estimate Std. Error t value Pr(>|t|)    
+## alpha  15.0962     0.1484  101.72   <2e-16 ***
+## beta    2.0113     0.0293   68.65   <2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.2796 on 48 degrees of freedom
+## 
+## Number of iterations to convergence: 4 
+## Achieved convergence tolerance: 9.237e-09
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{alpha\_hat }\OtherTok{\textless{}{-}} \FunctionTok{coef}\NormalTok{(nonlinear\_fit)[}\StringTok{\textquotesingle{}alpha\textquotesingle{}}\NormalTok{]}
+\NormalTok{beta\_hat }\OtherTok{\textless{}{-}} \FunctionTok{coef}\NormalTok{(nonlinear\_fit)[}\StringTok{\textquotesingle{}beta\textquotesingle{}}\NormalTok{]}
+
+\CommentTok{\# residual varience}
+\NormalTok{res }\OtherTok{\textless{}{-}} \FunctionTok{residuals}\NormalTok{(nonlinear\_fit)}
+\NormalTok{sigma\_hat\_sq }\OtherTok{\textless{}{-}} \FunctionTok{var}\NormalTok{(res)}
+
+\CommentTok{\# estimated vals}
+\FunctionTok{print}\NormalTok{(}\FunctionTok{c}\NormalTok{(}\StringTok{"Estimated alpha:"}\NormalTok{, alpha\_hat))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                                 alpha 
+## "Estimated alpha:" "15.0962242708225"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(}\FunctionTok{c}\NormalTok{(}\StringTok{"Estimated beta:"}\NormalTok{, beta\_hat))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                                  beta 
+##  "Estimated beta:" "2.01131765084923"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(}\FunctionTok{c}\NormalTok{(}\StringTok{"Estimated sigma squared:"}\NormalTok{, sigma\_hat\_sq))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Estimated sigma squared:" "0.0765514384068425"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# plotting estimated curve}
+\FunctionTok{plot}\NormalTok{(t, y, }\AttributeTok{las =} \DecValTok{1}\NormalTok{, }\AttributeTok{pch =} \DecValTok{16}\NormalTok{, }\AttributeTok{main =} \StringTok{"Nonlinear Least Squares Fit"}\NormalTok{)}
+\FunctionTok{lines}\NormalTok{(t, alpha\_hat }\SpecialCharTok{*} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{beta\_hat }\SpecialCharTok{*}\NormalTok{ t), }\AttributeTok{col =} \StringTok{"orange"}\NormalTok{, }\AttributeTok{lwd =} \DecValTok{2}\NormalTok{)}
+\FunctionTok{lines}\NormalTok{(t, }\DecValTok{15} \SpecialCharTok{*} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{2} \SpecialCharTok{*}\NormalTok{ t), }\AttributeTok{col =} \StringTok{"blue"}\NormalTok{, }\AttributeTok{lwd =} \DecValTok{2}\NormalTok{, }\AttributeTok{lty =} \DecValTok{2}\NormalTok{) }\CommentTok{\# to compare}
+\FunctionTok{legend}\NormalTok{(}\StringTok{"topright"}\NormalTok{, }\AttributeTok{legend =} \FunctionTok{c}\NormalTok{(}\StringTok{"Data"}\NormalTok{, }\StringTok{"Estimated"}\NormalTok{, }\StringTok{"True"}\NormalTok{), }
+       \AttributeTok{pch =} \FunctionTok{c}\NormalTok{(}\DecValTok{16}\NormalTok{, }\ConstantTok{NA}\NormalTok{, }\ConstantTok{NA}\NormalTok{), }\AttributeTok{lty =} \FunctionTok{c}\NormalTok{(}\ConstantTok{NA}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{), }
+       \AttributeTok{col =} \FunctionTok{c}\NormalTok{(}\StringTok{"black"}\NormalTok{, }\StringTok{"orange"}\NormalTok{, }\StringTok{"blue"}\NormalTok{), }\AttributeTok{bty =} \StringTok{"n"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{DSA8020_RLab5_files/figure-latex/unnamed-chunk-8-1.pdf}}
+
+\textbf{Answer:}
+
+Estimated values:
+
+\(\hat{\alpha} = 15.0962242708225, \hat{\beta} = 2.0113176, \hat{\sigma}^2 = 0.0765514384\)
+
+Estimate equation:
+
+\(\hat{y} = 15.0962 e^{-2.011376t} + \epsilon, \quad \epsilon \sim N(0, 0.07655)\)
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{7}
+\tightlist
+\item
+  Write down the fitted equation and the estimated variance
+  \(\hat{\sigma}^2\)
+\end{enumerate}
+
+\textbf{Answer:}
+
+Fitted Equation
+\(\hat{y} = 15.0962 e^{-2.011376t} + \epsilon, \quad \epsilon \sim N(0, 0.07655)\)
+
+Estimated Variance \(\hat{\sigma}^2 = 0.07655\)
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{8}
+\tightlist
+\item
+  Apply the natural log transformation to the simulated response, then
+  fit a simple linear regression. Back-transform to obtain the fit on
+  the original scale
+\end{enumerate}
+
+\textbf{Code:}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# simple linear reg}
+\NormalTok{linear\_fit }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(}\FunctionTok{log}\NormalTok{(y) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ t, }\AttributeTok{data =}\NormalTok{ data)}
+\FunctionTok{summary}\NormalTok{(linear\_fit)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = log(y) ~ t, data = data)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -1.98777 -0.06917 -0.00311  0.10335  1.05859 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)   2.7798     0.1233   22.55   <2e-16 ***
+## t            -2.1332     0.1062  -20.09   <2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.4423 on 48 degrees of freedom
+## Multiple R-squared:  0.8937, Adjusted R-squared:  0.8915 
+## F-statistic: 403.5 on 1 and 48 DF,  p-value: < 2.2e-16
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# coeff}
+\NormalTok{alpha\_log }\OtherTok{\textless{}{-}} \FunctionTok{exp}\NormalTok{(}\FunctionTok{coef}\NormalTok{(linear\_fit)[}\DecValTok{1}\NormalTok{])}
+\NormalTok{beta\_log }\OtherTok{\textless{}{-}} \SpecialCharTok{{-}}\FunctionTok{coef}\NormalTok{(linear\_fit)[}\DecValTok{2}\NormalTok{]}
+
+\CommentTok{\# back transform}
+\FunctionTok{plot}\NormalTok{(t, y, }\AttributeTok{pch =} \DecValTok{16}\NormalTok{, }\AttributeTok{main =} \StringTok{"Log{-}Transformed Linear Fit (Back{-}Transformed)"}\NormalTok{)}
+\FunctionTok{lines}\NormalTok{(t, alpha\_log }\SpecialCharTok{*} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{beta\_log }\SpecialCharTok{*}\NormalTok{ t), }\AttributeTok{col =} \StringTok{"red"}\NormalTok{, }\AttributeTok{lwd =} \DecValTok{2}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{DSA8020_RLab5_files/figure-latex/unnamed-chunk-9-1.pdf}}
+
+\textbf{Answer:}
+
+\begin{itemize}
+\tightlist
+\item
+  Nonlinear Model
+\end{itemize}
+
+\(ln(y) = ln(\alpha) - \beta t + \epsilon', \epsilon'  \sim N(0, \sigma'^2)\)
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{9}
+\tightlist
+\item
+  Comparing the nonlinear regression method and the linear regression
+  with log-transformed response, which method would you prefer in this
+  example? Explain your answer
+\end{enumerate}
+
+\textbf{Answer:}
+
+\begin{itemize}
+\tightlist
+\item
+  NLS as it can give parameter estimates with greater accuracy without
+  being affected by transformations.
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\end{document}

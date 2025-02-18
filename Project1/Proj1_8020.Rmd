@@ -1,0 +1,452 @@
+---
+title: "DSA 8020 Project 1"
+author: "saransh rakshak"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libtoolkit}
+library(dplyr)
+library(ggplot2)
+library(MASS)
+library(mgcv)
+library(car)
+```
+
+# Instructions
+
+For each problem, your answer should include the following elements:
+
+- A descriptive summary of the data using summary statistics and at least one plot/graph or table. Give your description in paragraph form.
+
+- An appropriate inferential analysis to address the question. This may be a confidence interval, hypothesis test, or both. You can use the $\alpha$ value/confidence level of your choice. If you perform a hypothesis test, state the hypotheses, test statistic, p-value, decision, and conclusion. If you create a confidence interval, state the confidence level and provide an interpretation of the interval.
+
+- A thoughtful conclusion that summarizes your findings. You should also discuss any limitations or complications of your analysis. This should include the following:
+
+    * An assessment of whether the modeling assumptions are reasonable.
+    
+    * Discussion of any unusual features of the data. For example, do outliers/high leverage points affect your results?
+    
+---
+
+# Problem 1: Gala
+
+- Perform a detailed regression analysis using the gala data set. Use Endemics as the response variable, excluding Species from this analysis, to address the following questions:
+
+**Code:**
+```{r loadgaladata}
+library(faraway)
+data(gala)
+
+# Excluding Species from analysis
+gala <- subset(gala, select = -Species)
+head(gala)
+```
+
+### Data Format
+
+Source: M. P. Johnson and P. H. Raven (1973) "Species number and endemism: The Galapagos Archipelago revisited" Science, 179, 893-895
+
+The dataset contains the following variables
+
+Species (Excluded from analysis)
+- the number of plant species found on the island
+
+Endemics
+- the number of endemic species
+
+Area
+- the area of the island (km$^2$)
+
+Elevation
+- the highest elevation of the island (m)
+
+Nearest
+- the distance from the nearest island (km)
+
+Scruz
+- the distance from Santa Cruz island (km)
+
+Adjacent
+- the area of the adjacent island (square km)
+
+---
+
+## 1. Provide a descriptive summary of the data set.
+
+**Code:**
+```{r}
+summary(gala)
+```
+
+```{r}
+# plot for endemics (response var)
+# hist
+ggplot(gala, aes(x = Endemics)) + 
+  geom_histogram(binwidth = 10, color = "black", fill = "blue") +
+  labs(title = "Distribution of Endemsics", x = "endemsics", y = "freq")
+
+# density
+ggplot(gala, aes(x = Endemics)) +
+  geom_density(color = "red", fill = "red") +
+  geom_rug() +
+  labs(title = "Density of endemsics", x = "endemsics")
+
+# plotting dist and density for Area
+ggplot(gala, aes(x = Area)) +
+  geom_histogram(binwidth = 100, color = "black", fill = "blue") +
+  labs(title = "Dist. Area", x = "area", y = "freq")
+
+ggplot(gala, aes(x = Area)) +
+  geom_density(color = "red", fill = "red") +
+  geom_rug() +
+  labs(title = "Density Area", x = "area (km^2)")
+
+# plots for Elevation
+ggplot(gala, aes(x = Elevation)) +
+  geom_histogram(binwidth = 50, color = "black", fill = "blue") +
+  labs(title = "Dist. Elevation", x = "elevation", y = "freq")
+
+ggplot(gala, aes(x = Elevation)) +
+  geom_density(color = "red", fill = "red") + geom_rug() +
+  labs(title = "Density of elevation", x = "elevation")
+
+# Nearest
+ggplot(gala, aes(x = Nearest)) +
+  geom_histogram(binwidth = 0.5, color = "black", fill = "blue") +
+  labs(title = "Dist. Nearest", x = "nearest", y = "freq")
+
+ggplot(gala, aes(x = Nearest)) +
+  geom_density(color = "red", fill = "red") +
+  geom_rug() +
+  labs(title = "Density of Nearest", x = "Nearest")
+
+# Scruz
+ggplot(gala, aes(x = Scruz)) +
+  geom_histogram(binwidth = 30, color = "black", fill = "blue") +
+  labs(title = "Dist. Scruz", x = "scruz", y = "freq")
+
+ggplot(gala, aes(x = Scruz)) +
+  geom_density(color = "red", fill = "red") +
+  geom_rug() +
+  labs(title = "Density of Scruz", x = "scruz")
+
+# Adjacent
+ggplot(gala, aes(x = Adjacent)) +
+  geom_histogram(binwidth = 100, color = "black", fill = "blue") +
+  labs(title = "Dist. Adjacent", x = "adjacent", y = "freq")
+
+ggplot(gala, aes(x = Adjacent)) +
+  geom_density(color = "red", fill = "red") +
+  geom_rug() +
+  labs(title = "Density of Adjacent", x = "Adj.")
+
+```
+
+
+**Answer:**
+
+- Endemics: Our response variable, Endemics, shows high variability with a large range (0 to 95). This indicates either that there is either a diverse and varying degrees of endemics in species observations.
+
+- Area, Adjacent: Both variables show significant variation, with a high max compared to mean values, and show right-skewed distributions. This suggest potential outliers confirmed on the distribution graphs. 
+
+- Scruz: Also shows moderately high variation, outliers can be seen in distribution graph however the presence of multiple values supports theory that these outliers are infact significant values, as opposed to what we saw with Area & Adjacent.
+
+---
+
+## 2. Is at least one of the predictors useful in predicting the response (Endemics)?
+
+**Code:**
+```{r}
+# getting p-vals
+model <- lm(Endemics ~ Area + Elevation + Nearest + Scruz + Adjacent, data = gala)
+summary(model)
+
+# residual vs fitted
+plot(model, which = 1)
+
+# qq plot
+qqnorm(resid(model))
+qqline(residuals(model))
+
+# corelation
+cor(gala[, c("Area", "Elevation", "Nearest", "Scruz", "Adjacent")], gala["Endemics"])
+```
+
+**Answer:**
+
+- Allowing an alpha of 0.05, we can see that Elevation (p-val: 5.83e-08) and Adjacent (p-val: 5.50e-05) are useful in predicting the response (Endemics).
+
+
+---
+
+## 3. Perform model selection to determine whether all the predictors help to explain the response.
+
+**Code:**
+```{r}
+# remove pointless vars iteratively based on AIC
+stepmodel <- stepAIC(model, direction = "both")
+summary(stepmodel)
+```
+
+
+**Answer:**
+
+- Using stepwise AIC selection, we can get a final optimal model of
+
+> Endemics ~ Area + Elevation + Scruz + Adjacent
+
+    - Area: 
+    
+    - Elevation:
+    
+    - Scruz:
+    
+    - Adjacent:
+    
+---
+
+## 4. Perform a Box-Cox transformation to determine if there is a need to transform the response.
+
+**Code:**
+```{r}
+# summary(gala)
+gala$Endemics <- gala$Endemics + 0.01  # to avoid 0.00 stopping boxcox()
+bc <- boxcox(stepmodel)
+plot(bc)
+```
+
+- As we get an approximate $\lambda$ value of near 0.5, I will apply a square root transformation to our response.
+
+```{r}
+bc_sqrt_endemics <- sqrt(gala$Endemics)
+bc_sqrt_model <- lm(bc_sqrt_endemics ~ Area + Elevation + Scruz + Adjacent, data = gala)
+summary(bc_sqrt_model)
+
+# residual vs fitted
+plot(bc_sqrt_model, which = 1)
+
+# normal QQ
+qqnorm(resid(bc_sqrt_model))
+qqline(residuals(bc_sqrt_model))
+```
+
+- Both plots show significant improvements over our original model. There is significantly less spread in Residuals as well as a more linear relationship in our QQ plot. 
+
+- Residual plots for both models(original and transformed) showed no significant patterns or heteroscedasticity; transformation doesn't violate assumptions of linear  regression.
+
+
+---
+
+## 5. Compare a generalized additive model fit with the linear regression fit and explain why you preferred one model over the other.
+
+**Code:**
+```{r}
+gam_model <- gam(bc_sqrt_endemics ~ s(Area) + s(Elevation) + s(Scruz) + s(Adjacent), data = gala)
+
+AIC(bc_sqrt_model, gam_model)
+BIC(bc_sqrt_model, gam_model)
+```
+
+**Answer:**
+
+- Our GAM model shows considerable improvement in degrees of freedom, (14 vs 6) thus proves to be more flexible.
+
+- Our GAM model also shows considerable improvement in AIC (97.4 vs 109.7 for Box-Cox transformation only) and slight improvement in BIC (117.1 vs 118.2 for Box-Cox transformation only).
+
+- Thus, our GAM model will be preferred moving forward.
+
+---
+
+## 6. How well does the chosen model fit the data? Quantify the fit numerically. Additionally, check the model assumptions and summarize your findings.
+
+**Code:**
+```{r}
+# comparing with Box-Cox sqrt model
+lm_dev <- deviance(bc_sqrt_model)
+null_lm_dev <- deviance(update(bc_sqrt_model, ~ -1))
+dev_explained_lm <- 1 - (lm_dev / null_lm_dev)
+dev_explained_lm
+
+# gam model
+gam_dev <- deviance(gam_model)
+null_gam_model <- gam(bc_sqrt_species ~ 1, data = gala)
+null_gam_dev <- deviance(null_gam_model)
+dev_explained_gam <- 1 - (gam_dev / null_gam_dev)
+dev_explained_gam
+```
+
+- There is a considerable improvement in deviance explained by the GAM model, 0.97 vs 0.94 with our Box-Cox transformation only.
+
+- This confirms the GAM model to better fit the data and be the optimal choice.
+
+```{r}
+# residual vs fitted
+gam.check(gam_model)
+
+# normal QQ
+qqnorm(residuals(gam_model))
+qqline(residuals(gam_model))
+```
+
+- in
+
+
+
+```{r}
+summary(gam_model)
+```
+
+
+
+- Our QQ plots show our residuals to be normally distributed, showing no violation in model assumptions.
+
+---
+
+## 7. Predict the response value when all the chosen predictors take their median value. Quantify the prediction uncertainty.
+
+**Code:**
+
+---
+
+## 8. Provide a thoughtful conclusion that summarize your findings.
+
+**Code:**
+
+---
+
+
+# Problem 2: Salaries
+
+- Perform a detailed analysis using the Salaries data set to comment on the salary differences between male and female faculty members.
+
+**Code:**
+```{r loadsaldata}
+library(carData)
+data(Salaries)
+```
+
+### Data Format
+
+References: Fox J. and Weisberg, S. (2019) An R Companion to Applied Regression, Third Edition, Sage.
+
+A data frame with 397 observations on the following 6 variables.
+
+rank
+- a factor with levels AssocProf AsstProf Prof
+
+discipline
+- a factor with levels A (“theoretical” departments) or B (“applied” departments).
+
+yrs.since.phd
+- years since PhD.
+
+yrs.service
+- years of service.
+
+sex
+- a factor with levels Female Male
+
+salary
+- nine-month salary, in dollars.
+
+---
+
+## 1. Provide a descriptive summary of the data set.
+
+**Code:**
+```{r}
+head(Salaries)
+summary(Salaries)
+```
+
+**Answer:**
+
+- The majority of the staff roster is made up of Full Professors (266).
+
+- There are slightly more Applied discipline (216) than Theoretical (181).
+
+- Mean years since Phd is 22.31 years, while mean years of service is 17.61 years.
+
+- Male staff makes up an overwhelming majority of the staff roster.
+
+- Salary varies widely, with a median of 107k, and a maximum of 231k.
+
+    - Mean salary is slightly higher at 113k --> potential positive skewing salary distribution.
+
+- Distribution indicates some professors earn significantly more, most likely based on rank and years of service.
+
+---
+
+## 2. Comment on whether there is a need to include interactions between these categorical predictors. Select your model and justify your choice.
+
+**Code:**
+```{r}
+ggplot(Salaries, aes(x = salary, fill = rank)) +
+  geom_density(alpha = 0.3) + 
+  facet_wrap(~rank) + 
+  labs(title = "Salary dist by Rank", x = "salary", y = "density")
+```
+
+```{r}
+# salary distribution by discipline and rank
+ggplot(Salaries, aes(x = salary, fill = interaction(rank, discipline))) +
+  geom_density(alpha = 0.3) + 
+  facet_wrap(~discipline) + 
+  labs(title = "Salary dist Discipline and Rank", x = "salary", y = "density")
+```
+
+```{r}
+# salary distribution years since pdf (cat)
+ggplot(Salaries, aes(x = factor(yrs.since.phd), y = salary)) +
+  geom_boxplot() +
+  labs(title = "Salary dist by yrs.since.phd", x = "years since phd", y = "salary")
+```
+
+```{r}
+# salary dist by sex
+ggplot(Salaries, aes(x = salary, fill = sex)) +
+  geom_density(alpha = 0.3) +
+  labs(title = "salary dist by sex", x = "salary", y = "density")
+```
+
+
+---
+
+## 3. Perform a log transformation on response to determine if there is any improvement in terms of model fit.
+
+**Code:**
+
+
+---
+
+## 4. How well does the chosen model fit the data? Quantify the fit numerically. Additionally, check the model assumptions and summarize your findings.
+
+**Code:**
+
+---
+
+## 5. Write a thoughtful conclusion to comment on the salary differences between male and female faculty.
+
+**Code:**
+
+
+
+
+
+---
+
+
+
+
+
+
+
+
+
