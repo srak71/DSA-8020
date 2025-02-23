@@ -46,7 +46,6 @@ data(gala)
 
 # Excluding Species from analysis
 gala <- subset(gala, select = -Species)
-
 head(gala)
 ```
 
@@ -147,19 +146,17 @@ ggplot(gala, aes(x = Adjacent)) +
   geom_density(color = "red", fill = "red") +
   geom_rug() +
   labs(title = "Density of Adjacent", x = "Adj.")
-
 ```
 
+Our plots and our call of summary(gala) reveals the following information:
 
-**Answer:**
+    - (Endemics): Our response variable, Endemics, shows high variability with a large range (0 to 95). This indicates either that there is either a diverse and varying degrees of endemics in species observations. Our plot shows Endemics to appear right-skewed, showing that some islands have significantly more endemic species than others.
 
-- (Endemics): Our response variable, Endemics, shows high variability with a large range (0 to 95). This indicates either that there is either a diverse and varying degrees of endemics in species observations. Our plot shows Endemics to appear right-skewed, showing that some islands have significantly more endemic species than others.
+    - (Area, Adjacent): Both variables show significant variation, with a high max compared to mean values, and show right-skewed distributions. This suggest potential outliers confirmed on the distribution graphs. 
 
-- (Area, Adjacent): Both variables show significant variation, with a high max compared to mean values, and show right-skewed distributions. This suggest potential outliers confirmed on the distribution graphs. 
+    - (Scruz): Also shows moderately high variation, outliers can be seen in distribution graph however the presence of multiple values supports theory that these outliers are in fact significant values, as opposed to what we saw with Area & Adjacent.
 
-- (Scruz): Also shows moderately high variation, outliers can be seen in distribution graph however the presence of multiple values supports theory that these outliers are in fact significant values, as opposed to what we saw with Area & Adjacent.
-
-- (Elevation, Nearest): Both show more balanced distributions compared to our other variables, but still their values lie in a wide range.
+    - (Elevation, Nearest): Both show more balanced distributions compared to our other variables, but still their values lie in a wide range.
 
 ---
 
@@ -186,13 +183,13 @@ qqline(residuals(model))
 
 **Answer:**
 
-Allowing an $\alpha = 0.05$, we can see that...
+- Allowing an $\alpha = 0.05$, we can see that...
 
-- Elevation (p-val: 5.83e-08) and Adjacent (p-val: 5.50e-05) are useful in predicting the response (Endemics).
+    - Elevation (p-val: 5.83e-08) and Adjacent (p-val: 5.50e-05) are useful in predicting the response (Endemics).
 
-- Area (p-val: 0.0732) is slightly above our alpha 0.05, suggesting that Area has some predictive value but is not statistically significant.
+    - Area (p-val: 0.0732) is slightly above our alpha 0.05, suggesting that Area has some predictive value but is not statistically significant.
 
-- Scruz (p-val: 0.2044) and Nearest (p-val: 0.9066) have little to no meaningful relationship with Endemics that can be leveraged in prediction. 
+    - Scruz (p-val: 0.2044) and Nearest (p-val: 0.9066) have little to no meaningful relationship with Endemics that can be leveraged in prediction. 
 
 
 ---
@@ -220,7 +217,7 @@ summary(stepmodel)
     
 - Our step-wise AIC removed variable Nearest as it was shown to increase AIC, reducing response prediction in our final model.
 
-In summation, all variables were not useful in predicting the response, and variable Nearest was removed using step-wise AIC, giving a new optimized model with:
+- In summation, all variables were not useful in predicting the response, and variable Nearest was removed using step-wise AIC, giving a new optimized model with:
     
 > Endemics ~ Area + Elevation + Scruz + Adjacent
     
@@ -235,14 +232,13 @@ gala$Endemics <- gala$Endemics + 0.000001
 
 # boxcox of stepwise AIC optimized model
 bc <- boxcox(stepmodel)
-plot(bc)
 ```
 
 - As we get an approximate $\lambda$ value of near 0.5, I will apply a square root transformation to our response variable Endemics.
 
 ```{r}
-bc_sqrt_endemics <- sqrt(gala$Endemics)
-bc_sqrt_model <- lm(bc_sqrt_endemics ~ Area + Elevation + Scruz + Adjacent, data = gala)
+sqrt_endemics <- sqrt(gala$Endemics)
+bc_sqrt_model <- lm(sqrt_endemics ~ Area + Elevation + Scruz + Adjacent, data = gala)
 summary(bc_sqrt_model)
 
 # residual vs fitted
@@ -258,50 +254,74 @@ qqline(residuals(bc_sqrt_model))
 - Residual plots for both models(original and transformed) showed no significant patterns or heteroscedasticity; transformation doesn't violate assumptions of linear regression.
 
 
+
 ---
+
+
 
 ## 5. Compare a generalized additive model fit with the linear regression fit and explain why you preferred one model over the other.
 
 **Code:**
 ```{r}
-gam_model <- gam(bc_sqrt_endemics ~ s(Area) + s(Elevation) + s(Scruz) + s(Adjacent), data = gala)
+# setting up GAM model and GAM model without sqrt transformation to Endemics
+gam_model <- gam(sqrt_endemics ~ s(Area) + s(Elevation) + s(Scruz) + s(Adjacent), data = gala)
+gam_model_no_sqrt <- gam(Endemics ~ s(Area) + s(Elevation) + s(Scruz) + s(Adjacent), data = gala)
 
-AIC(bc_sqrt_model, gam_model)
-BIC(bc_sqrt_model, gam_model)
+summary(gam_model)
+summary(gam_model_no_sqrt)
 ```
 
-**Answer:**
 
-- Our GAM model shows considerable improvement in degrees of freedom, (14 vs 6) thus proves to be more flexible.
+- There is a considerable improvement in both of our GAM models:
 
-- Our GAM model also shows considerable improvement in AIC (97.4 vs 109.7 for Box-Cox transformation only) and slight improvement in BIC (117.1 vs 118.2 for Box-Cox transformation only).
+    - Our GAM model without square root transformaition has a higher Deviance Explained score of 98%, as well as higher adjusted R-squared value of 0.97.
+    
+    - Our GAM with square root transformation to response variable Endemics also shows a slightly improved adjusted R-squared value of 0.84 (compared to below 0.80 for all non-GAM models) as well as improved deviance explained.
 
-- Thus, our GAM model will be preferred moving forward.
+- This confirms either of the two GAM models will be the better choice moving forward, however, we will need to compare AIC/BIC values to decide which is the best of the two. 
+
+```{r}
+# original model vs GAM with sqrt transformation
+AIC(model, stepmodel, bc_sqrt_model, gam_model_no_sqrt, gam_model)
+BIC(model, stepmodel, bc_sqrt_model, gam_model_no_sqrt, gam_model)
+```
+
+- GAM without sqrt(Endemics) outperforms in terms of adjusted R-squared values and Deviance Explained.
+    
+- GAM model with sqrt(Endemics) significantly outperforms GAM (no sqrt) in terms of AIC and BIC.
+
+    - This indicating it is less likely to overfit. 
+    
+    - Lower AIC/BIC values indicates better balance between fit and complexity. 
+    
+- GAM with transformation of sqrt(Endemics) may be the safer and more generalizable model for making predictions on Endemics.
+
+- While the GAM model without transformation scores higher on both adjusted R-squared and deviance explained, its complexity (df = 19) and much higher AIC/BIC criterion values suggests that it may not perform well on new data.
+
+- Thus, the transformed GAM provides more robust and justifiable model for our conclusion.
+
+
 
 ---
 
+
 ## 6. How well does the chosen model fit the data? Quantify the fit numerically. Additionally, check the model assumptions and summarize your findings.
 
+
+
+    
+- Untransformed GAM has MUCH better scores for R-squared and Deviance Explanined, but it is marginal compared to the scores for the transformed GAM. 
+
+- GAM with sqrt transformation has much lower AIC/BIC values (98.3, 117.8) showing it is better at fitting the data. 
+
+    - Has significantly lower AIC/BIC criterion values, indication a much more flexible model.
+    
+    - Lower degrees of freedom shows reduced risk of overfitting.
+    
+    - Trade-off in adjusted R-squared and deviance explained is acceptable as transformed GAM is much better at generalizing the trends.
+
+
 **Code:**
-```{r}
-# comparing with Box-Cox sqrt model
-lm_dev <- deviance(bc_sqrt_model)
-null_lm_dev <- deviance(update(bc_sqrt_model, ~ -1))
-dev_explained_lm <- 1 - (lm_dev / null_lm_dev)
-dev_explained_lm
-
-# gam model
-gam_dev <- deviance(gam_model)
-null_gam_model <- gam(bc_sqrt_species ~ 1, data = gala)
-null_gam_dev <- deviance(null_gam_model)
-dev_explained_gam <- 1 - (gam_dev / null_gam_dev)
-dev_explained_gam
-```
-
-- There is a considerable improvement in deviance explained by the GAM model, 0.98 vs 0.94 with our Box-Cox transformation only.
-
-- This confirms the GAM model to better fit the data and be the optimal choice.
-
 ```{r}
 # residual vs fitted
 gam.check(gam_model)
@@ -311,28 +331,101 @@ qqnorm(residuals(gam_model))
 qqline(residuals(gam_model))
 ```
 
-- 
-
-
-
-```{r}
-summary(gam_model)
-```
-
+- Residual plots for GAM (no transformation to Endemics) showed no significant patterns or heteroscedasticity; model doesn't violate assumptions of linear regression.
 
 - Our QQ plots show our residuals to be normally distributed, showing no violation in model assumptions.
 
+
+
 ---
+
 
 ## 7. Predict the response value when all the chosen predictors take their median value. Quantify the prediction uncertainty.
 
 **Code:**
+```{r}
+median_values <- data.frame(
+  Area = median(gala$Area, na.rm = TRUE),
+  Elevation = median(gala$Elevation, na.rm = TRUE),
+  Scruz = median(gala$Scruz, na.rm = TRUE),
+  Adjacent = median(gala$Adjacent, na.rm = TRUE)
+)
+
+prediction <- predict(
+  gam_model_no_sqrt, 
+  newdata = median_values, 
+  se.fit = TRUE
+)
+
+fit <- prediction$fit
+se <- prediction$se.fit
+
+alpha <- 0.05
+z_value <- qnorm(1 - alpha / 2)
+lower_ci <- fit - z_value * se
+upper_ci <- fit + z_value * se
+
+pred_uncertainty <- (upper_ci - lower_ci) / 2
+
+cat("Predicted Endemics:", round(fit, 2), "\n")
+cat("95% Prediction Interval: [", round(lower_ci, 2), ",", round(upper_ci, 2), "]\n")
+cat("Prediction Uncertainty: ", pred_uncertainty)
+```
+
+- Prediction for Endemics for basic GAM model is 17.47, with a 95% Prediction Interval of [10.53, 24.4], and a Prediction uncertainty of 6.936.
+
+```{r}
+median_values <- data.frame(
+  Area = median(gala$Area, na.rm = TRUE),
+  Elevation = median(gala$Elevation, na.rm = TRUE),
+  Scruz = median(gala$Scruz, na.rm = TRUE),
+  Adjacent = median(gala$Adjacent, na.rm = TRUE)
+)
+
+prediction <- predict(
+  gam_model, 
+  newdata = median_values, 
+  se.fit = TRUE
+)
+
+fit_sqrt <- prediction$fit 
+se_sqrt <- prediction$se.fit 
+
+alpha <- 0.05
+z_value <- qnorm(1 - alpha/2) 
+lower_ci_sqrt <- fit_sqrt - z_value * se_sqrt
+upper_ci_sqrt <- fit_sqrt + z_value * se_sqrt
+
+# back-transform (square)
+fit_endemics <- fit_sqrt^2
+lower_ci_endemics <- lower_ci_sqrt^2
+upper_ci_endemics <- upper_ci_sqrt^2
+
+pred_uncertainty <- (upper_ci_endemics - lower_ci_endemics) / 2
+
+cat("Predicted Endemics:", round(fit_endemics, 2), "\n")
+cat("95% CI for Endemics: [", round(lower_ci_endemics, 2), ",", round(upper_ci_endemics, 2), "]\n")
+cat("Prediction Uncertainty: ", pred_uncertainty)
+```
+
+- Prediction for Endemics for transformed GAM model is 12.66 with a 95% Confidence Interval of [6.32, 21.17], and  prediction uncertainty is 7.424.
+
+- While basic GAM shows a lower prediction uncertainty, our transformed GAM is still preferred due to its generalizability to new data. Similarly to that of adjusted R-square and deviance explained, the trade-off in prediction uncertain is minimal and acceptable.
 
 ---
 
 ## 8. Provide a thoughtful conclusion that summarize your findings.
 
-**Code:**
+**Answer:**
+
+- In this analysis of species diversity on the Galapagos Islands, I explored how geographic and topographic factors influence the number of Endemic species. Descriptive summaries of the raw data revealed substantial variability and right-skewed distributions, particularly in variables 'Area' and 'Adjacent', suggesting the presence of outliers.
+
+- The regression analysis shows that 'Elevation' and 'Adjacent' are significant predictors of our response variable 'Endemics', with 'Elevation' having the strongest association. 'Area' was close to significance and warrants further consideration, but 'Scruz' and 'Nearest' are not particularly informative. Stepwise AIC selection confirmed 'Nearest' to be removed as it slightly improved model performance.
+
+- Box-Cox transformation using a square-root transformation on the response variable improves normality of residuals and reduces heterogeneity of variance. Comparing linear regression to generalized additive models (GAM), we found that the GAM without transformation yielded the highest adjusted R² (0.97) and deviance explained (98.9%), indicating a strong fit. However, this came with a risk of over-fitting due to increased complexity. The GAM with a transformed response offered a better balance between model complexity and generalizability, as reflected by lower AIC/BIC values and a more stable prediction uncertainty.
+
+- Ultimately, our transformed GAM model was chosen as the best choice for making future predictions on 'Endemics'.
+
 
 ---
 
@@ -354,7 +447,7 @@ References: Fox J. and Weisberg, S. (2019) An R Companion to Applied Regression,
 A data frame with 397 observations on the following 6 variables.
 
 rank
-- a factor with levels AssocProf AsstProf Prof
+- a factor with levels 'AssocProf', 'AsstProf', 'Prof'.
 
 discipline
 - a factor with levels A (“theoretical” departments) or B (“applied” departments).
@@ -383,19 +476,48 @@ summary(Salaries)
 
 **Answer:**
 
-- The majority of the staff roster is made up of Full Professors (266).
+- 'salary' (Response variable)
 
-- There are slightly more Applied discipline (216) than Theoretical (181).
+    - Salary ranges from 57k to 231k, with a median salary of 107k and a slightly higher mean salary of 113k, indicating a right skewed distribution.
+    
+    - This spread is likely linked to faculties 'rank', 'discipline', 'yrs.since.phd', 'yrs.service', and possibly even 'sex'.
 
-- Mean years since Phd is 22.31 years, while mean years of service is 17.61 years.
 
-- Male staff makes up an overwhelming majority of the staff roster.
+- 'rank'
 
-- Salary varies widely, with a median of 107k, and a maximum of 231k.
+    - Most faculty members are Professors (266).
+    
+    - Associate Professors (64) and Assistant Professors (67) combined make up slightly less than half of the total faculty.
+    
+- 'discipline'
 
-    - Mean salary is slightly higher at 113k --> potential positive skewing salary distribution.
+    - There are two disciplines, A (Theoretical) and B (Appied), with Applied discipline (216) being slightly more popular than Theoretical discipline (181).
+    
+- 'yrs.since.phd'
 
-- Distribution indicates some professors earn significantly more, most likely based on rank and years of service.
+    - Staff have an average of 22.31 years since they completed their PhD, with a close median value of 21 years.
+    
+    - There is a large range between the min and max values, indicating that the staff has a wide range of experience, with some staff haing 56 years since completeing their PhD while others have only 1 year since PhD.
+    
+- 'yrs.service'
+
+    - Staff has an average of 17.6 years of service with their institution, with a median of 16 years. 
+    
+    - Simmilar to before, there is a wide range of experience, with some being new to the institution (0.00 yrs.service) and others spending up to 60 years at the institution. 
+
+- 'sex'
+
+    - There is an immense gender imbalance, Male faculty make up roughly 90% of the staff (358), whereas Female faculty make up only slightly less than 10% (39) of the staff roster.
+    
+    -  The discrepancy could potentially impact the reliability of statistical analyses regarding salary variations, and it is essential to take note of this factor during interpretation.
+    
+- Initial Observations:
+
+    - Male dominance in dataset (~90%) may bias salary averages if male faculty disproportionatly holds higher 'rank', 'yrs.since.phd', or 'yrs.service'.
+    
+    -  It is probable that 'rank', 'yrs.since.phd' and 'yrs.service' could serve as confounding elements. The observed salary differences between genders may be attributed to discrepancies in these aspects to some degree.
+    
+    - Right skew observed in salary distribution indicates presence of high salary outliers, and can even potentially affect comparison between male and female salaries, especially because Females make up such a small amount of the data.
 
 ---
 
@@ -403,34 +525,82 @@ summary(Salaries)
 
 **Code:**
 ```{r}
-ggplot(Salaries, aes(x = salary, fill = rank)) +
-  geom_density(alpha = 0.3) + 
-  facet_wrap(~rank) + 
-  labs(title = "Salary dist by Rank", x = "salary", y = "density")
-```
-
-```{r}
-# salary distribution by discipline and rank
-ggplot(Salaries, aes(x = salary, fill = interaction(rank, discipline))) +
-  geom_density(alpha = 0.3) + 
-  facet_wrap(~discipline) + 
-  labs(title = "Salary dist Discipline and Rank", x = "salary", y = "density")
-```
-
-```{r}
-# salary distribution years since pdf (cat)
-ggplot(Salaries, aes(x = factor(yrs.since.phd), y = salary)) +
-  geom_boxplot() +
-  labs(title = "Salary dist by yrs.since.phd", x = "years since phd", y = "salary")
-```
-
-```{r}
 # salary dist by sex
 ggplot(Salaries, aes(x = salary, fill = sex)) +
   geom_density(alpha = 0.3) +
-  labs(title = "salary dist by sex", x = "salary", y = "density")
+  labs(title = "Salary distribution by sex", x = "salary", y = "density") +
+  theme_minimal()
+
+# sex and rank
+ggplot(Salaries, aes(x = salary, fill = interaction(sex, rank))) +
+  geom_density(alpha = 0.3) + 
+  facet_wrap(~rank) + 
+  labs(title = "Salary dist. Sex and Rank", x = "salary", y = "density") +
+  theme_minimal()
+
+# sex and discipline
+ggplot(Salaries, aes(x = salary, fill = interaction(sex, discipline))) +
+  geom_density(alpha = 0.3) + 
+  facet_wrap(~discipline) + 
+  labs(title = "Salary dist. Sex and Discipline", x = "salary", y = "density") +
+  theme_minimal()
+
+# salary dist: sex and yrs.since.phd
+ggplot(Salaries, aes(x = salary, fill = sex)) +
+  geom_density(alpha = 0.3) +
+  facet_wrap(~ cut(yrs.since.phd, breaks = seq(0, 60, by = 10), right = FALSE,
+                   labels = c("0-9", "10-19", "20-29", "30-39", "40-49", "50-60"))) +
+  labs(title = "Salary dist. Sex and yrs.since.phd (bin=10)", x = "Salary", y = "Density") +
+  theme_minimal()
+
+# salary dist: sex, yrs.service
+ggplot(Salaries, aes(x = salary, fill = sex)) +
+  geom_density(alpha = 0.3) +
+  facet_wrap(~ cut(yrs.service, 
+                   breaks = seq(0, 60, by = 10), 
+                   right = FALSE, 
+                   labels = c("0-9", "10-19", "20-29", "30-39", "40-49", "50-60")), drop = FALSE) +
+  labs(title = "Salary dist. Sex and yrs.service (bin=10)", x = "Salary", y = "Count") +
+  theme_minimal()
 ```
 
+- (Sex, Rank):
+
+    -  In the event that salary disparities between Male and Female are more pronounced at higher ranks (like full professors compared to assistant professors) it becomes necessary to explore an interaction between 'sex' and 'rank'.
+    
+- (Sex, Discipline):
+
+    -   In the event that 'Male' and 'Female' staff face salary discrepancies among fields of study, with more significant gaps apparent in 'applied' disciplines versus 'theoretical', it becomes essential to consider an interaction between discipline and sex.
+
+- To account for all confounding variables like 'rank', 'discipline', and 'yrs.since.phd'/'yrs.service', I will use a basic linear regression model:
+
+> Salary ~ sex + rank + discipline + yrs.since.phd + yrs.service
+
+- I will also establish a secondary model to test for overall salary differences for sex with focus on interaction between confounding variables 'rank' and 'discipline'.
+
+> Salary ~ sex * rank + sex * discipline + yrs.since.phd + yrs.service
+
+```{r}
+model_basic <- lm(salary ~ sex + rank + discipline + yrs.since.phd + yrs.service, data=Salaries)
+model_rank_disc <- lm(salary ~ sex * rank + sex * discipline + yrs.since.phd + yrs.service, data=Salaries)
+
+summary(model_basic)
+summary(model_rank_disc)
+```
+
+
+```{r}
+# R-squared to test accuracy
+print(c("Basic Model adjusted R-squared: ", summary(model_basic)$adj.r.squared))
+print(c("Rank/Discipline interaction Model adjusted R-squared: ", summary(model_rank_disc)$adj.r.squared))
+
+# AIC to test fit/complexity balance
+AIC(model_basic, model_rank_disc)
+BIC(model_basic, model_rank_disc)
+```
+
+
+- As our basic model shows the best values for adjusted R-squared, and also shows improvement in AIC/BIC criterion values with lower complexity (df=8), it is the better of the two models. 
 
 ---
 
@@ -438,21 +608,71 @@ ggplot(Salaries, aes(x = salary, fill = sex)) +
 
 **Code:**
 
+```{r}
+model_basic_log <- lm(log(salary) ~ sex + rank + discipline + yrs.since.phd + yrs.service, data=Salaries)
+model_rank_disc_log <- lm(log(salary) ~ sex * rank + sex * discipline + yrs.since.phd + yrs.service, data=Salaries)
+
+# R-squared to test accuracy
+print(c("Transformed Basic Model adjusted R-squared: ", summary(model_basic_log)$adj.r.squared))
+print(c("Transformed Rank/Discipline interaction Model adjusted R-squared: ", summary(model_rank_disc_log)$adj.r.squared))
+
+# AIC to test fit/complexity balance
+AIC(model_basic_log, model_rank_disc_log)
+BIC(model_basic_log, model_rank_disc_log)
+```
+
+- Log transformation on both models considerably improved model fit, with lower values for both Akaike and Bayesian Information Criterion. 
+
+
+- Due to the extremely similar values for adjusted R-squared and AIC/BIC, we will continue to optimize our basic model instead of focusing on Rank/Discipline interaction for Sex on Salary. This is also in part due to the basic model having less complexity (df=8), thus can be more generalizable. 
+
+
+
 
 ---
 
+
+
+
 ## 4. How well does the chosen model fit the data? Quantify the fit numerically. Additionally, check the model assumptions and summarize your findings.
 
-**Code:**
+
+
+- Our model fit improved with the log transformation to response variable 'salary', with improved Akaike and Bayesian Information Criterion values of [A:-222.78, B:-190.91] as opposed to the prior [A:9093.83, B:9125.7].
+
+```{r}
+# Checking model assumptions
+# residual vs fitted
+plot(model_basic_log, which = 1)
+
+# qq plot
+qqnorm(resid(model_basic_log))
+qqline(residuals(model_basic_log))
+```
+
+- Residuals vs. Fitted
+
+    - Residuals appear randomly scattered around 0.0, meets assumption of linearity.
+    
+    - Visible clustering reveals variance may not be constant, mildly violating heteroscedasticity assumption.
+    
+- QQ Plot
+
+    - Shows residuals to follow a normal distribution, as most points lie near our reference line.
+    
+    - Slight deviations on tail indicates mild non-normality of residuals, likely due to outliers.
+
+- Our model meets assumptions of linearity and normality, however there may be some non-constant variance as well as a small amount of outliers.
+
 
 ---
 
 ## 5. Write a thoughtful conclusion to comment on the salary differences between male and female faculty.
 
-**Code:**
 
+- In our analysis, we've revealed a considerable salary disparity between male and female academics across academic ranks. On average, males consistently earn higher salaries compared to their female co-workers, regardless of rank. This trend persists even when considering factors such as discipline.
 
-
+- Although differences in rank distribution (with more senior positions held by men) contributes partly to the salary disparity, it does not fully explain the observed differences. A deeper investigation, possibly incorporating further variables like 'yrs.since.phd' or 'yrs.service', could show valuable insights into underlying causes.
 
 
 ---
