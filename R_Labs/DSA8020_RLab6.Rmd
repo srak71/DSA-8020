@@ -1,6 +1,6 @@
 ---
 title: 'DSA 8020 R Lab 6: Non-parametric Regression and Shrinkage Methods'
-author: "your name here"
+author: "saransh rakshak"
 output:
   pdf_document:
     toc: true
@@ -25,26 +25,68 @@ In this lab, we will take the variables \texttt{gamble} as the response and \tex
 **Code:**
 
 ```{r}
+library(dplyr)
+library(ggplot2)
 library(faraway)
+library(splines)
+library(mgcv)
+
 data(teengamb)
+head(teengamb)
 ```
+
+```{r}
+ggplot(teengamb, aes(x = income, y = gamble)) +
+  geom_point(color = "blue", size = 3) +
+  labs(title = "Scatterplot (amt gambled by income)", x = "income", y = "amt gambled") +
+  theme_minimal()
+```
+
 
 2. Fit a curve to the data using a regression spline with \texttt{df = 8}. Produce a plot for the fit and a 95% confidence band (using *RegSplinePred <- predict(RegSplineFit, data.frame(income = xg), interval = "confidence")*) for that fit. Is a linear fit plausible?  
 
 **Code:**
 
 ```{r}
+# regression spline w/ df = 8
+RegSplineFit <- lm(gamble ~ bs(income, df = 8), data = teengamb)
 
+# sequence income
+xg <- seq(min(teengamb$income), max(teengamb$income))
+
+# 95% CI
+RegSplinePred <- predict(RegSplineFit, newdata = data.frame(income = xg), interval = "confidence")
+
+data_plt <- data.frame(income = xg, fit = RegSplinePred[, "fit"], lower = RegSplinePred[, "lwr"], upper = RegSplinePred[, "upr"])
+ggplot() +
+  geom_point(data = teengamb, aes(x = income, y = gamble), color = "blue") +
+  geom_line(data = data_plt, aes(x = income, y = fit), color = "red") +
+  geom_ribbon(data = data_plt, aes(x = income, ymin = lower, ymax = upper), alpha = 0.2) +
+  labs(title = "Regression Spline (95% CI)", x = "income", y = "$ gambled")
 ```
 
 **Answer:**
 
+- Linear fit not possible, data shows non-linear pattern along with 95% CI reflecting the same.   
+
 3. Fit regression curves using *generalized additive models* and *smoothing splines*, respectively, and compare them with the regression spline fit in problem 2.
 
 **Code:**
-
+  
 ```{r}
+# GAM model
+gam_fit <- gam(gamble ~ s(income), data = teengamb)
+smooth_spline_fit <- smooth.spline(teengamb$income, teengamb$gamble, cv = TRUE)
+xg <- seq(min(teengamb$income), max(teengamb$income), length.out = 200)
 
+# 95% CI
+gam_pred <- predict(gam_fit, newdata = data.frame(income = xg), se.fit = TRUE)
+gam_data <- data.frame(
+  income = xg,
+  fit = gam_pred$fit,
+  lower = gam_pred$fit - 2 * gam_pred$se.fit,
+  upper = gam_pred$fit + 2 * gam_pred$se.fit
+)
 ```
 
 **Answer:**
