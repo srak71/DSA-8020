@@ -20,7 +20,9 @@ In this lab, we will take the variables \texttt{gamble} as the response and \tex
 
 *Data Source:* Ide-Smith & Lea, 1988, *Journal of Gambling Behavior*, 4, 110-118
 
-1. Make a scatterplot to examine the relationship between the predictor \texttt{income} and the response \texttt{gamble}.
+---
+
+### 1. Make a scatterplot to examine the relationship between the predictor \texttt{income} and the response \texttt{gamble}.
 
 **Code:**
 
@@ -30,6 +32,7 @@ library(ggplot2)
 library(faraway)
 library(splines)
 library(mgcv)
+library(glmnet)
 
 data(teengamb)
 head(teengamb)
@@ -38,12 +41,13 @@ head(teengamb)
 ```{r}
 ggplot(teengamb, aes(x = income, y = gamble)) +
   geom_point(color = "blue", size = 3) +
-  labs(title = "Scatterplot (amt gambled by income)", x = "income", y = "amt gambled") +
+  labs(title = "Scatterplot ($ gambled by income)", x = "income", y = "$ gambled") +
   theme_minimal()
 ```
 
+---
 
-2. Fit a curve to the data using a regression spline with \texttt{df = 8}. Produce a plot for the fit and a 95% confidence band (using *RegSplinePred <- predict(RegSplineFit, data.frame(income = xg), interval = "confidence")*) for that fit. Is a linear fit plausible?  
+### 2. Fit a curve to the data using a regression spline with \texttt{df = 8}. Produce a plot for the fit and a 95% confidence band (using *RegSplinePred <- predict(RegSplineFit, data.frame(income = xg), interval = "confidence")*) for that fit. Is a linear fit plausible?  
 
 **Code:**
 
@@ -56,12 +60,12 @@ xg <- seq(min(teengamb$income), max(teengamb$income))
 
 # 95% CI
 RegSplinePred <- predict(RegSplineFit, newdata = data.frame(income = xg), interval = "confidence")
-
 data_plt <- data.frame(income = xg, fit = RegSplinePred[, "fit"], lower = RegSplinePred[, "lwr"], upper = RegSplinePred[, "upr"])
+
 ggplot() +
   geom_point(data = teengamb, aes(x = income, y = gamble), color = "blue") +
   geom_line(data = data_plt, aes(x = income, y = fit), color = "red") +
-  geom_ribbon(data = data_plt, aes(x = income, ymin = lower, ymax = upper), alpha = 0.2) +
+  geom_ribbon(data = data_plt, aes(x = income, ymin = lower, ymax = upper), alpha = 0.5) +
   labs(title = "Regression Spline (95% CI)", x = "income", y = "$ gambled")
 ```
 
@@ -69,27 +73,43 @@ ggplot() +
 
 - Linear fit not possible, data shows non-linear pattern along with 95% CI reflecting the same.   
 
-3. Fit regression curves using *generalized additive models* and *smoothing splines*, respectively, and compare them with the regression spline fit in problem 2.
+
+---
+
+### 3. Fit regression curves using *generalized additive models* and *smoothing splines*, respectively, and compare them with the regression spline fit in problem 2.
 
 **Code:**
   
 ```{r}
-# GAM model
 gam_fit <- gam(gamble ~ s(income), data = teengamb)
-smooth_spline_fit <- smooth.spline(teengamb$income, teengamb$gamble, cv = TRUE)
+
+# all.knot to remove dupes
+smooth_spline_fit <- smooth.spline(teengamb$income, teengamb$gamble, all.knots = TRUE)
+
+# sequence income
 xg <- seq(min(teengamb$income), max(teengamb$income), length.out = 200)
 
 # 95% CI
-gam_pred <- predict(gam_fit, newdata = data.frame(income = xg), se.fit = TRUE)
-gam_data <- data.frame(
-  income = xg,
-  fit = gam_pred$fit,
-  lower = gam_pred$fit - 2 * gam_pred$se.fit,
-  upper = gam_pred$fit + 2 * gam_pred$se.fit
-)
+GAM_Pred <- predict(gam_fit, newdata = data.frame(income = xg), se.fit = TRUE)
+data_plt <- data.frame(income = xg, fit = GAM_Pred$fit, lower = GAM_Pred$fit - 2 * GAM_Pred$se.fit,
+                       upper = GAM_Pred$fit + 2 * GAM_Pred$se.fit)
+
+# Plot with 95% CI
+ggplot() +
+  geom_point(data = teengamb, aes(x = income, y = gamble), color = "blue") +
+  geom_line(data = data_plt, aes(x = income, y = fit), color = "red", linewidth = 1) +
+  geom_ribbon(data = data_plt, aes(x = income, ymin = lower, ymax = upper), alpha = 0.5) +
+  labs(title = "GAM Spline (95% CI)", x = "income", y = "$ gambled") +
+  theme_minimal()
 ```
 
 **Answer:**
+
+- GAM plot shows that 'income' affects 'gamble' differently across income range. 
+
+- Gambling increases more rapidly after a certain income level.
+
+---
 
 ## Ridge Regression andd LASSO: Meat spectrometry to determine fat content
 
@@ -104,12 +124,16 @@ Load the data and partition it into the *training set* (the first 150 observatio
 
 ```{r}
 data(meatspec, package = "faraway")
-train <- 1:150; test <- 151:215
+train <- 1:150
+test <- 151:215
 trainmeat <- meatspec[train,]
 testmeat <- meatspec[test,]
 ```
 
-4. Fit a linear regression with all the 100 predictors to the training set. Compute the root mean square error (RMSE) for the testing set. The code below shows how to compute the RMSE for the training set (also known as in-sample prediction), and you will need to modify the code to compute the RMSE for the testing set.
+
+---
+
+### 4. Fit a linear regression with all the 100 predictors to the training set. Compute the root mean square error (RMSE) for the testing set. The code below shows how to compute the RMSE for the training set (also known as in-sample prediction), and you will need to modify the code to compute the RMSE for the testing set.
 
 **Code:**
 
@@ -119,37 +143,130 @@ lmFit <- lm(fat ~ ., data = trainmeat)
 rmse <- function(pred, obs) sqrt(mean((pred - obs)^2))
 # Computing RMSE for the training set
 rmse(fitted(lmFit), trainmeat$fat)
+
+# RMSE for test set
+rmse(predict(lmFit, newdata = testmeat), testmeat$fat)
 ```
 
 **Answer:**
 
-5. Fit a ridge regression (using cross-validation to select the 'best' $\lambda$) to the training set and compute the RMSE for the testing set.
+- Our RMSE for test data is significantly higher, which may be due to...
+
+    - Overfitting
+    
+    - Data variability
+
+
+---
+
+### 5. Fit a ridge regression (using cross-validation to select the 'best' $\lambda$) to the training set and compute the RMSE for the testing set.
 
 **Code:**
 
 ```{r}
+# fat is reponse var, only include in y
+x_train <- as.matrix(trainmeat[, -1])
+y_train <- trainmeat$fat
+x_test <- as.matrix(testmeat[, -1])
+y_test <- testmeat$fat
 
+# cross validation with alpha = 0 for ridge regression
+cv_ridge <- cv.glmnet(x_train, y_train, alpha = 0, standardize = TRUE)
+
+# getting best lambda
+best_lambda <- cv_ridge$lambda.min
+print(c("Best Lambda: ", best_lambda))
+
+# predict on training
+train_pred <- predict(cv_ridge, s = best_lambda, newx = x_train)
+train_rmse <- rmse(train_pred, y_train)
+print(c("Ridge Regression Training RMSE: ", train_rmse))
+
+# pred on test set
+test_pred <- predict(cv_ridge, s = best_lambda, newx = x_test)
+test_rmse <- rmse(test_pred, y_test)
+print(c("Ridge Reg. Test RMSE: ", test_rmse))
 ```
 
 **Answer:**
 
-6. Fit a LASSO (again using Cross-Validation to select the 'best' $\lambda$) to the and  training set and compute RMSE for the test set.
+- Ridge Training RMSE (1.31)
+
+    - Increased from 0.592 in our linear regression.
+    
+    - New ridge regression has higher RMSE because it forfits small amout of training accuracy for increased generalization to data, which allows our test RMSE to increase.
+    
+- Ridge Test RMSE (1.4)
+
+    - Decreased (improvement) from 3.52 in our linear regression.
+    
+    - Ridge regression improved predition performance on new (test) data by reducing variance with a small increase in bias.
+
+
+---
+
+### 6. Fit a LASSO (again using Cross-Validation to select the 'best' $\lambda$) to the and training set and compute RMSE for the test set.
 
 **Code:**
 
 ```{r}
+# now using alpha = 1 for lasso regression 
+cv_lasso <- cv.glmnet(x_train, y_train, alpha = 1, standardize = TRUE)
 
+# getting new best lambda
+best_lambda <- cv_lasso$lambda.min
+print(c("Best Lambda: ", best_lambda))
+
+# predict on training
+train_pred <- predict(cv_lasso, s = best_lambda, newx = x_train)
+train_rmse <- rmse(train_pred, y_train)
+print(c("Lasso Training RMSE: ", train_rmse))
+
+# pred on test set
+test_pred <- predict(cv_lasso, s = best_lambda, newx = x_test)
+test_rmse <- rmse(test_pred, y_test)
+print(c("Lasso Test RMSE: ", test_rmse))
 ```
 
 
 **Answer:**
 
-7. Fit a LASSO with all the data points (using the best $\lambda$ from question 6) and report the number of non-zero regression coefficients.
+- Lasso Training RMSE (0.37) & Test RMSE (0.36)
+
+    - Considerable improvement over both our ridge regression and linear regression models.
+    
+    - Likely due to Lasso selecting only most importance predictors, reduces noise and improves training RMSE.
+    
+    - Best balance of bias and variance by removing poor predictors.
+    
+    - Improved generalization without sacrificing much training accuracy.
+    
+
+---
+
+### 7. Fit a LASSO with all the data points (using the best $\lambda$ from question 6) and report the number of non-zero regression coefficients.
 
 **Code:**
 
 ```{r}
+x_full <- as.matrix(meatspec[, !(names(meatspec) %in% "fat")])
+y_full <- meatspec$fat 
 
+lasso_full <- glmnet(x_full, y_full, alpha = 1, lambda = best_lambda, standardize = TRUE)
+
+# get coeff
+lasso_coefs <- coef(lasso_full)
+non_zero_coeff <- sum(lasso_coefs[-1, , drop = FALSE] != 0)  # -1 to remove predictor
+selected_preds <- rownames(lasso_coefs)[which(lasso_coefs[-1, , drop = FALSE] != 0) + 1]
+
+print(c("# of non-zero coefficients: ", non_zero_coeff))
+print(c("non-zero coefficients: ", selected_preds))
 ```
 
 **Answer:**
+
+- We can find 6 non-zero coefficients using Lasso method with our optimal lambda = 0.37.
+
+
+
+---
