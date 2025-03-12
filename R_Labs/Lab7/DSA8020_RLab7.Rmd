@@ -1,0 +1,198 @@
+---
+title: 'DSA 8020 R Lab 7: Completely Randomized Designs'
+author: "saransh rakshak"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+The dataset \texttt{PlantGrowth} contains results from an experiment comparing yields (measured by the dried weight of plants) obtained under a control condition and two different treatment conditions.
+
+*Data Source:* Dobson, A. J. (1983) *An Introduction to Statistical Modelling*. London: Chapman and Hall.
+
+Let's load the data first:
+
+**Code:**
+
+```{r}
+data(PlantGrowth)
+str(PlantGrowth)
+```
+
+---
+
+1. Compute the treatment means and standard deviations 
+
+**Code:**
+
+```{r}
+treat_mean <- tapply(PlantGrowth$weight, PlantGrowth$group, mean)
+treat_sd <- tapply(PlantGrowth$weight, PlantGrowth$group, sd)
+
+print(c("treatment mean weight: ", treat_mean))
+print(c("treatment sd weight: ", treat_sd))
+```
+
+---
+
+2. Make side-by-side boxplots by treatment 
+
+**Code:**
+
+```{r}
+boxplot(weight ~ group, data = PlantGrowth, 
+        main = "Plant Growth by Treatment",
+        xlab = "Treatment", 
+        ylab = "Weight", 
+        col = c("blue", "green", "yellow"))
+```
+
+---
+
+3. Write down the effects model and explain each term in the model, including the model assumptions regarding the random error.
+
+**Answer:**
+
+Effects model is our ANOVA to see how different treatments affect our response (weight).
+
+Our one way ANOVA will have the following effects model:
+
+$Y_{ij} = \mu + \tau_i + \epsilon_{ij}$
+
+where: 
+
+$Y_{ij}$ = our observed response for subject 'j' in treatment 'i'
+
+$\mu$ = our overall mean of weight across all groups (control, treatment1 and treatment2)
+
+$\tau_i$ = how much treatment 'i' deviates from our overall mean '$\mu$'
+
+$\epsilon_{ij}$ = random error for subject 'j' in treatment 'i'
+
+Random error $\epsilon_{ij}$ must satisfy the following assumptions in order for our ANOVA to be valid:
+
+- Independence: Errors $\epsilon_{ij}$ must be independent across all obervations, thus no correlation should exist between $\epsilon_{ij}$ from different subjects.
+
+- Normality: $\epsilon_{ij}$ (errors) should be normally distributed. 
+
+- Homoscedasticity: Variance of $\epsilon_{ij}$ should be the same across treatment groups.  
+
+---
+
+4. Perform an overall $F$-test using ANOVA. State the hypotheses, $p$-value, decision, and conclusion.
+
+**Code:**
+
+```{r}
+# fit
+plant_anova <- aov(weight ~ group, data = PlantGrowth)
+summary(plant_anova)
+```
+
+**Answer:**
+
+- Null Hypothesis ($H_o$): All treatment means are the same.
+
+$H_o : \mu_{ctrl} = \mu_{trt1} = \mu_{trt2}$
+
+- Alternative Hypothesis ($H_A$): One or more treatment mean is different.
+
+$H_A : \mu_{ctrl} \neq \mu_{trt1} = \mu_{trt2}$, $H_A : \mu_{trt1} \neq \mu_{ctrl} = \mu_{trt2}$, $H_A : \mu_{trt2} \neq \mu_{ctrl} = \mu_{trt1}$ 
+
+or 
+
+$H_A : \mu_{ctrl} \neq \mu_{trt1} \neq \mu_{trt2}$
+
+Since we get a p-value of 0.0159 and are using an alpha of 0.05, we decide to reject the null hypothesis ($H_o$).
+
+We can conclude that at least one treatment group mean is significantly different than others. We can find which group differs greatly through our Tukey HSD procedure in step 5.
+
+---
+
+5. Conduct pairwise comparisons using Tukey's HSD procedure. Interpret the results.
+
+**Code:**
+
+```{r}
+tukey_treats <- TukeyHSD(plant_anova)
+print(tukey_treats)
+```
+
+**Answer:**
+
+- 'trt1-ctrl' : There is no significant difference between treatment 1 and control (diff = -0.371) since the p-value (0.39) is greater than our $\alpha$ (0.05) and the confidence interval includes 0. 
+
+- 'trt2-ctrl' : There is no significant difference between treatment 1 and control (diff = 0.494) since the p-value (0.19) is greater than our $\alpha$ (0.05) and the confidence interval includes 0. 
+
+- 'trt2-trt1' : There is significant difference between treatment 2 and our treatment 1 (diff = 0.865). Treatment 2 has a significantly higher mean plant weight than treatment 1. This is confirmed by our p-value (0.012) being lower than our $\alpha$ (0.05) and the confidence interval not including 0.
+
+---
+
+6. Use a QQ plot to examine the normality assumption of the error.
+
+**Code:**
+
+```{r}
+res_plant_anova <- residuals(plant_anova)
+
+qqnorm(res_plant_anova)
+qqline(res_plant_anova, col = 'red')
+```
+
+**Answer:**
+
+- Our QQ plot shows residuals to be normal with the exception of some outliers in tail. Thus we can conclude that the normality assumption is met, however we can confirm our conclusion using Shapiro-Wilk normality test.
+
+```{r}
+shapiro.test(res_plant_anova)
+```
+
+- Shapiro-Wilk outputs a p-value of 0.4379, greater than our $\alpha = 0.05$. We can safely say normality assumption is met.
+
+
+---
+
+7. Make a residual plot to assess the equal variance assumption.
+
+**Code:**
+
+```{r}
+fitted_vals <- fitted(plant_anova)
+
+plot(fitted_vals, res_plant_anova,
+     main = 'Residual Plot',
+     xlab = 'Fitted Values',
+     ylab = 'Residuals',
+     col = 'grey')
+
+abline(h = 0, col = 'red')
+```
+
+**Answer:**
+
+- We can see that there is no significantly changing spread across fitted values, thus we can conclude that the equal variance assumption (Homoscedasticity) is met; however, this can be confirmed numerically using Levene's test done in the next step.
+
+---
+
+8. Perform a Levene’s test for equal variance.s
+
+
+**Code:**
+
+```{r}
+library(car)
+
+leveneTest(weight ~ group, data = PlantGrowth)
+```
+
+**Answer:**
+
+- As our p-value (0.3412) is greater than our $\alpha$ (0.05), we can safely say that the homoscedasticity assumption is met.
+
+---
+
