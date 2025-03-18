@@ -10,8 +10,12 @@ output:
 
 ```{r, include=FALSE}
 # loading libs
+library(dplyr)
 library(ggplot2)
+library(faraway)
 library(mgcv)
+library(MASS) # for negative binomial
+library(mlegp)
 ```
 
 # **Problem 1**: Regression Modeling - Generalized Linear Model vs Linear Regression Model
@@ -20,7 +24,6 @@ Perform a detailed regression analysis using the gala data set. Use *Species* as
 
 ```{r}
 # loading data
-library(faraway)
 data(gala)
 
 # remove endemics from dataset
@@ -58,9 +61,6 @@ var(gala$Species)
 - We can see that the variance of 'Species' is greater than it's mean, indicating that Poisson (including quasi-poisson due to the **significantly** large difference) would not be the best fit due to over-dispersion. Rather, a negative binomial model would be better.
 
 ```{r}
-# lib for negative binomial
-library(MASS)
-
 # fitting neg binom
 gala_negbinom <- glm.nb(Species ~ Area + Elevation + Nearest + Scruz + Adjacent, data = gala)
 summary(gala_negbinom)
@@ -70,7 +70,8 @@ summary(gala_negbinom)
 
 ```{r}
 # optimizing neg binom stepwise
-optim_galaNB <- step(gala_negbinom, direction = "backward") # dir='backward' less risk of overfit than 'both'
+# dir='backward' less risk of overfit than 'both'
+optim_galaNB <- step(gala_negbinom, direction = "backward")
 summary(optim_galaNB)
 ```
 
@@ -281,11 +282,19 @@ ggplot(grids, aes(x = x1, y = x2, z = pred_y)) +
 ```
 
 
+### B. Compute and visualize the prediction uncertainty using a Gaussian process model. Briefly comment on your findings.
 
+```{r}
+# fitting gaussian model
+copter_GPFit <- mlegp(copter_df[, 1:2], copter_df[, 3])
+summary(copter_GPFit)
+```
 
-
-
-
+```{r}
+# make preds on dense grid
+# y_hats <- predict(copter_GPFit, grids, se.fit = TRUE)
+# print(y_hats)
+```
 
 
 

@@ -1,0 +1,254 @@
+---
+title: "DSA 8020 R Lab 5: Analysis of covariance and Non-linear Regression"
+author: "Whitney"
+output:
+  pdf_document:
+    toc: true
+    fig_width: 8.5
+    fig_height: 6
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Analysis of covariance: Salaries for Professors
+
+The 2008-09 nine-month academic salary for Assistant Professors, Associate Professors and Professors in a college in the U.S. The data were collected as part of the on-going effort of the college's administration to monitor salary differences between male and female faculty members.
+
+### Load the dataset
+
+**Code:**
+
+```{r}
+library(carData)
+data(Salaries)
+head(Salaries)
+summary(Salaries)
+str(Salaries)
+```
+
+**Description of the variables**
+
+* \texttt{rank}: a factor with levels Assistant Professor ("AsstProf"); Associate Professor ("AssocProf"); Full Professor ("Prof")
+
+* \texttt{discipline}: a factor with levels A ("theoretical" departments) or B ("applied" departments)
+
+* \texttt{yrs.since.phd}: years since her/his PhD
+
+* \texttt{sex}: a factor with levels "Female" and "Male"
+
+* \texttt{salary}: nine-month salary, in dollars
+
+### Exploratory Data Analysis
+
+1. Identify the numerical variables and categorical variabes in this data set
+
+**Answer: Numerical variables: \texttt{yrs.since.phd}, \texttt{yrs.service}, \texttt{salary}. Categorical variabes: \texttt{rank}, \texttt{discipline}, \texttt{sex}**
+
+2. Summarize each variable numerically and graphically, briefly describe your findings
+
+**Code:**
+
+```{r}
+summary(Salaries)
+catVars <- which(colnames(Salaries) %in% c("rank", "discipline", "sex"))
+numVars <- which(colnames(Salaries) %in% c("yrs.since.phd", "yrs.service", "salary"))
+
+
+for (i in catVars) barplot(sort(table(Salaries[,i]), decreasing = T), las = 1,
+                           main = colnames(Salaries)[i])
+for (i in numVars){
+  hist(Salaries[,i], 30, main = colnames(Salaries)[i], las = 1, prob = T, border = "gray" )
+  lines(density(Salaries[,i]))
+  abline(v = mean(Salaries[,i]), col = "blue")
+  abline(v = median(Salaries[,i]), col = "red")
+  legend("topright", legend = c("Mean", "Median"), lty = 1, col = c("blue", "red"))
+}
+```
+
+**Answer:**
+The years of service and years since PhD are both skewed to the right. The salary distribution is also skewed to the right but is somewhat closer to symmetric. There are more professors (~2/3) than associate and assistant professors combined (~1/3). The disciplines are relatively evenly distributed. However, there are significantly more male professors than female professors.
+
+3. Create a scatterplot matrix and briefly describe your findings
+
+**Code:**
+
+```{r}
+pairs(Salaries[, numVars], cex = 0.5, col = "chocolate1")
+cor(Salaries[, numVars])
+
+library(GGally)
+ggpairs(Salaries[, numVars])
+```
+
+**Answer:**
+As expected, there is a strong positive linear relationship between \texttt{yrs.service} and \texttt{yrs.since.phd}. Additionally, there is a moderate positive linear relationship between \texttt{salary} and \texttt{yrs.since.phd}, and an even weaker positive linear relationship between \texttt{salary} and \texttt{yrs.service}.
+
+
+In the code chunk below, we apply ggpairs to all the variables, both numerical and categorical, to see what happens.
+
+```{r}
+ggpairs(Salaries)
+```
+
+
+### Model Fitting
+
+4. Fit a multiple linear regression model (MLR) with \texttt{yrs.since.phd}, \texttt{discipline}, \texttt{rank}, and \texttt{sex} as predictors. Write down the fitted regression equations for each category (e.g., Female, Assistant Professor, theoretical departments). There are 12 categories in total
+
+**Code:**
+
+```{r}
+model1 <- lm(salary ~ yrs.since.phd + discipline + rank + sex, data = Salaries)
+summary(model1)
+```
+
+**Answer:**
+
+* Female, Assistant Professor, theoretical departments: $\hat{\texttt{salary}} = 67884.32 + 61.01 \times \texttt{yrs.since.phd}$
+
+* Female, Assistant Professor, applied departments: $\hat{\texttt{salary}} = (67884.32+13937.47) + 61.01 \times \texttt{yrs.since.phd}$
+
+* Female, Associate Professor, theoretical departments: $\hat{\texttt{salary}} = (67884.32+13104.15) + 61.01 \times \texttt{yrs.since.phd}$
+
+* Female, Associate Professor, applied departments: $\hat{\texttt{salary}} = (67884.32+13937.47+13104.15) + 61.01 \times \texttt{yrs.since.phd}$
+
+* Female, Professor, theoretical departments: $\hat{\texttt{salary}} = (67884.32+46032.55) + 61.01 \times \texttt{yrs.since.phd}$
+
+* Female, Professor, applied departments: $\hat{\texttt{salary}} = (67884.32+13937.47+46032.55) + 61.01 \times \texttt{yrs.since.phd}$
+
+* Male, Assistant Professor, theoretical departments: $\hat{\texttt{salary}} = (67884.32+4349.37) + 61.01 \times \texttt{yrs.since.phd}$
+
+* Male, Assistant Professor, applied departments: $\hat{\texttt{salary}} = (67884.32+13937.47+4349.37) + 61.01 \times \texttt{yrs.since.phd}$
+
+* Male, Associate Professor, theoretical departments: $\hat{\texttt{salary}} = (67884.32+13104.15+4349.37) + 61.01 \times \texttt{yrs.since.phd}$
+
+* Male, Associate Professor, applied departments: $\hat{\texttt{salary}} = (67884.32+13937.47+13104.15+4349.37) + 61.01 \times \texttt{yrs.since.phd}$
+
+* Male, Professor, theoretical departments: $\hat{\texttt{salary}} = (67884.32+46032.55+4349.37) + 61.01 \times \texttt{yrs.since.phd}$
+
+* Male, Professor, applied departments: $\hat{\texttt{salary}} = (67884.32+13937.47+46032.55+4349.37) + 61.01 \times \texttt{yrs.since.phd}$
+
+
+5. State the model assumptions in the previous regression model
+
+**Answer:**
+There is a linear relationship between \texttt{salary} and \texttt{yrs.since.phd}, and the regression slope remains consistent across all 12 categories. Additionally, the random error term follows a normal distribution with constant variance, and all of these random errors are independent of each other.
+
+6. Now fit another MLR with \texttt{yrs.since.phd}, \texttt{discipline}, \texttt{sex} and their interactions. Write down the fitted regression equations for each category
+
+**Code:**
+
+```{r}
+model2 <- lm(salary ~ yrs.since.phd * discipline * sex, data = Salaries)
+summary(model2)
+```
+
+**Answer:**
+
+* Female, theoretical departments: $\hat{\texttt{salary}} = 66195.4 + 1306.8 \times \texttt{yrs.since.phd}$
+
+* Female, applied departments: $\hat{\texttt{salary}} = (66195.4 + 2677.9) + (1306.8 + 1397.1) \times \texttt{yrs.since.phd}$
+
+* Male, theoretical departments: $\hat{\texttt{salary}} = (66195.4 + 22688.4) + (1306.8-475.8) \times \texttt{yrs.since.phd}$
+
+* Male, applied departments: $\hat{\texttt{salary}} = (66195.4 + 22688.4 + 2677.9 + 2194.0) + (1306.8-475.8 + 1397.1 -989.3) \times \texttt{yrs.since.phd}$
+
+
+
+## Non-linear Regression: An Simulated Example
+
+Suppose the response $y$ depends on the predictor $t$ in the following form:
+$$y = \alpha \exp(-\beta t) + \epsilon,$$
+where $\epsilon \sim \mathrm{N}(0, \sigma^2)$, and the true $\alpha$, $\beta$, and $\sigma^2$
+are 15, 2 and 0.09, respectively. First, let's simulate some data points from this nonlinear model:
+
+**Code:**
+
+```{r}
+alpha = 15; beta = 2; sigma.sq = 0.09
+n <- 50
+t <- seq(0, 2, len = 50)
+set.seed(123)
+y <- alpha * exp(-beta * t) + rnorm(n, sd = sqrt(sigma.sq))
+data <- data.frame(y = y, t = t)
+
+plot(t, y, las = 1, pch = 16)
+lines(t, alpha * exp(-beta * t), type = "l", col = "blue")
+legend("topright", legend = c("Data", "True"), pch = c(16, NA), lty = c(NA, 1),
+       col = c("black", "blue"), bty = "n")
+```
+7. Use the \texttt{nls} function to obtain nonlinear least-squares estimates $\hat{\alpha}$, $\hat{\beta}$, and $\hat{\sigma}^2$. To use \texttt{nls}, provide formula = y $\sim$ alpha * exp(-beta * t), start = list(alpha = alpha_0, beta = beta_0), where alpha_0 and  beta_0 are initial guesses of the parameters $\alpha$ and $\beta$
+
+
+**Code:**
+
+```{r}
+NLFit <- nls(y ~ alpha * exp(-beta * t), start = list(alpha = 5, beta = 1))
+summary(NLFit)
+```
+
+**Answer:** 
+$\hat{\alpha}=$ `r summary(NLFit)$coefficients[1,1]`,
+$\hat{\beta}=$ `r summary(NLFit)$coefficients[2,1]`,
+and $\hat{\sigma}=$ `r summary(NLFit)$sigma`
+
+
+8. Write down the fitted equation
+
+**Answer:**
+$y = 15.0962 \times \exp(-2.0113\times t)$
+
+9. Apply the natural log transformation to the simulated response and fit a simple linear regression. Back transform to get the fit on the original scale. 
+
+Note that $\mathbb{E}(y) = \alpha\exp(-\beta t) \Rightarrow \log(\mathbb{E}(y))=\log(\alpha)-\beta t$
+
+**Code:**
+
+```{r}
+logTrlmFit <- lm(log(y) ~ t)
+summary(logTrlmFit)
+```
+
+**Answer:** 
+
+
+We have $\hat{\beta}=2.1332$ $(SE(\hat{\beta})=0.1062)$ and $\hat{\alpha} = \exp(2.7798)=16.1158$
+
+10. Comparing the nonlinear regression method and the linear regression with log-transformed response, which method would you prefer in this example. Explain your answer
+
+**Code/Answer:**
+
+```{r}
+# true
+true <- alpha * exp(-beta * t)
+# prediction using nls and the ols with log-transformed response
+pred_nls <- predict(NLFit)
+pred_tlm <- exp(predict(logTrlmFit))
+# RMSE
+sqrt(mean((pred_nls  - true)^2))
+sqrt(mean((pred_tlm  - true)^2))
+```
+
+The nonlinear regression method is better in terms of prediction accuracy, as measured by the Root Mean Squared Error (RMSE).
+
+
+```{r}
+plot(t, alpha * exp(-beta * t), type = "l", col = "blue")
+lines(t, pred_nls, col = "red")
+lines(t, exp(predict(logTrlmFit)), col = "green")
+legend("top", legend = c("Ture", "NLS", "OLS_log"), col = c("blue", "red", "green"),
+       lty = 1, bty = "n")
+```
+
+There are noticeable discrepancies, especially when $t$ is close to 0, between the linear regression with a log-transformed response and the true regression function.
+
+
+
+```{r}
+confint(NLFit)
+confint(logTrlmFit)
+exp(confint(logTrlmFit)[1,])

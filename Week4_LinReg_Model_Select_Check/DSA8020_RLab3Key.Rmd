@@ -1,0 +1,205 @@
+---
+title: 'DSA 8020 R Lab 3: Multiple Linear Regression II'
+author: "Whitney"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Percentage of Body Fat and Body Measurements
+
+Age, weight, height, and 10 body circumference measurements are recorded for 252 men. Each man's percentage of body fat was accurately estimated by an underwater weighing technique.
+
+
+*Data Source:* Johnson R. *Journal of Statistics Education* v.4, n.1 (1996)
+
+
+## Load the dataset
+
+**Code:**
+
+```{r}
+library(faraway)
+data(fat)
+head(fat)
+```
+
+For the purposes of this lab, we will use only the following variables for conducting data analysis:
+
+1. $y$ \texttt{brozek}: Percent body fat using Brozek's equation
+$$\frac{457}{\text{Density}} - 414.2$$
+
+2. $x_{1}$ \texttt{age}: Age (yrs); 
+
+3. $x_2$ \texttt{weight}: Height (inches);
+
+4. $x_3$ \texttt{height}: Height (inches);
+
+5. $x_4$ \texttt{chest}: Chest circumference (cm);
+
+6. $x_5$ \texttt{abdom}: Abdomen circumference (cm) at the umbilicus and level with the iliac crest
+
+**Code:**
+
+You can use the code below to extract these variables
+
+```{r}
+vars <- c("brozek", "age", "weight", "height", "chest", "abdom")
+data <- fat[, vars]
+```
+
+ 
+## Exploratory Data Analysis
+
+### Numerical summary
+
+1. Use \texttt{summary} commend to produce various numerical summaries of each of the 6 variables under consideration  
+
+**Code:**
+
+```{r}
+summary(data)
+```
+
+### Graphical summary
+
+2. Make a boxplot for each variable 
+
+**Code:**
+
+```{r}
+par(mfrow = c(1, dim(data)[2]), mar = c(1, 3, 2, 0.5))
+for (i in 1:dim(data)[2])
+boxplot(data[, i], main = colnames(data)[i], las = 1)
+```
+
+3. Briefly discuss the shape of the distribution of each variable
+
+**Answer:**
+
+\texttt{brozek} is close to symmetric with one upper outlier. Age is (slightly) right-skewed. \texttt{weight} is approximately symmetric with two upper outliers. \texttt{height} is approximately symmetric with a single lower outlier. \texttt{chest} is slightly right skewed with two upper outliers. \texttt{abdom} is right skewed with three upper outliers.
+
+
+4. Create a scatterplot matrix to explore the inter-dependence between these variables 
+
+**Code:**
+
+```{r}
+pairs(data, cex = 0.5, col = "purple")
+```
+
+## General Linear $F$-Test
+
+Suppose a researcher would like to compare the "Full" model using all the 5 predictors and a "reduce" model where only $x_{1}$ (\texttt{age}) and $x_{5}$ (\texttt{abdom}) are used by performing a general linear F-test:
+
+5. Write down the null and the alternative hypotheses
+
+**Answer:**
+
+$H_{0}: \beta_{\texttt{weight}}=\beta_{\texttt{height}}=\beta_{\texttt{chest}}=0$
+vs.
+$H_{a}:$ A least one the above three coefficients $\neq 0$
+
+6. Fit the full model and write down the fitted linear regression equation.
+
+**Code:**
+
+```{r}
+full <- lm(brozek ~ ., data = data)
+summary(full)
+```
+
+
+**Answer:**
+
+$\hat{\texttt{brozek}}=-32.153538-0.006447 \times \texttt{age} -0.121843 \times \texttt{weight} -0.118164 \times \texttt{height}-0.012862\times \texttt{chest}+ 0.894248\times \texttt{abdom}$
+
+7. Fit the reduce model and write down the fitted linear regression equation.
+
+**Code:**
+
+```{r}
+reduce <- lm(brozek ~ age + abdom, data = data)
+summary(reduce)
+```
+
+**Answer:**
+
+$\hat{\texttt{brozek}}=-36.51507+0.06605 \times \texttt{age} + 0.56710\times \texttt{abdom}$
+
+8. Perform a general linear F-test and state the conclusion at $\alpha = 0.05$
+
+**Code:**
+
+```{r}
+anova(reduce, full)
+```
+
+**Answer:**
+
+Since the p-value of this general linear $F$-test is less than $\alpha$, we reject $H_{0}$ and conclude that we have sufficient evidence to support that at least one of the three regression coefficients is not equal to 0. 
+
+## Prediction
+
+9. Predict a future response for an individual with \texttt{age} $=54$, \texttt{weight} $=197$, \texttt{height} $=72.25$, \texttt{chest} $=105.375$, and \texttt{abdom} $= 99.325$. Construct a 95% prediction interval.
+
+**Code:**
+
+```{r}
+new <- data.frame(age = 54, weight = 197, height = 72.25, chest = 105.375, abdom = 99.325)
+predict(full, newdata = new, interval = "prediction")
+```
+
+
+**Answer:**
+
+The predicted value is `r predict(full, newdata = new, interval = "prediction")[1]` and the 95% prediction interval is [`r predict(full, newdata = new, interval = "prediction")[2:3]`].
+
+10. Construct a 95% confidence interval for the mean response of percent body fat
+ with \texttt{age} $=54$, \texttt{weight} $=197$, \texttt{height} $=72.25$, \texttt{chest} $=105.375$, and \texttt{abdom} $= 99.325$.
+ 
+**Code:**
+
+```{r}
+predict(full, newdata = new, interval = "confidence")
+```
+ 
+**Answer:**
+
+The 95% prediction interval is [`r predict(full, newdata = new, interval = "confidence")[2:3]`].
+
+ 
+## Multicollinearity
+
+
+11. Compute the correlation matrix for all 6 variables (including the response).
+
+**Code:**
+
+```{r}
+cor(data)
+```
+
+
+
+12. Calculate VIF and briefly discuss your finding
+
+**Code:**
+
+```{r}
+vif(full)
+```
+
+**Answer:**
+
+Since \texttt{weight}, \texttt{chest}, and \texttt{abdom} all have "high" VIF values (i.e., $>5$), we determine that we have multicollinearity between these predictors, meaning that these predictors are highly correlated with the remaining predictors. There does not appear to be multicorrilinearity with the other two predictors of \texttt{age} and \texttt{height}.
+
+
+
+

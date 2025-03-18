@@ -1,0 +1,172 @@
+---
+title: 'DSA 8020 R Lab 1: Simple Linear Regression'
+author: "Whitney"
+date: '`r format(Sys.time(), "%B %d, %Y")`'
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Leaning Tower of Pisa
+
+The dataset \texttt{PisaTower.csv} contains annual measurements of the lean (the difference, in meters, between where a point on the tower would be if it were straight and where it actually is) from 1975 to 1987. Our goal is to characterize the lean over time by fitting a simple linear regression model.
+
+
+## Load the dataset
+
+**Code:**
+
+```{r}
+PisaTower <- read.csv("PisaTower.csv")
+head(PisaTower)
+```
+
+
+## Descriptive analysis
+
+### Numerical summary
+
+**Code:**
+
+```{r}
+summary(PisaTower)
+cor(PisaTower)
+sd(PisaTower$lean)
+```
+
+### Graphical summary
+
+**Code:**
+
+```{r}
+boxplot(PisaTower$lean, las = 1)
+par(mar = c(4, 4, 1, 0.5), mgp = c(3, 1, 0), las = 1, family = "serif")
+plot(PisaTower$year, PisaTower$lean, pch = 16, xlab = "Year", ylab = "Lean (m)")
+grid()
+```
+
+
+**Question:** Describe the direction, strength, and the form of the relationship.
+
+**Answer:**
+
+There is a strong, positive, linear relationship between lean and year.
+
+The code chunk below, which utilizes *ggpairs* from *GGally*, combines scatter plots (that visualize the relationship between two variables) and numerically quantifies the strength of the (linear) correlation between the dependent and independent variables.
+
+```{r,message=FALSE}
+library(GGally)
+p <- ggpairs(PisaTower)
+# Customize the axis text and label size
+p <- p + 
+  theme(axis.text = element_text(size = 6.5),
+        axis.title = element_text(size = 10))
+# Display the plot
+print(p)
+```
+
+
+## Simple linear regression
+
+1. Identify the response variable, the predictor variable, and the sample size.
+
+**Answer:**
+
+Response variable: \texttt{lean}. Predictor variable: \texttt{year}. Sample size: $n=13$
+
+2. Fit a simple linear regression 
+
+**Code:**
+
+```{r}
+lmfit <- lm(lean ~ year, data = PisaTower)
+summary(lmfit)
+```
+
+3. Write down the fitted linear regression model 
+
+**Answer:**
+
+$\hat{\text{lean}}=1.123 + 9.319\times 10^{-4} \times \text{year}$
+
+4. What is $\hat{\sigma}$, the estimate of $\sigma$
+
+**Answer:**
+
+$\hat{\sigma}=$ `r summary(lmfit)$sigma`
+
+5. Find a 95% confidence interval for $\beta_{1}$
+
+**Code:**
+
+```{r}
+confint(lmfit)["year",]
+```
+
+6. Test the following hypothesis: $H_{0}: \beta_{1} = 0$ vs. $H_{a} : \beta_{1} \neq 0$ with $\alpha = 0.05$
+
+**Answer:**
+
+Test statistic: $t=30.07 \Rightarrow$ p-value = $6.50 \times 10^{-12}$ 
+Reject $H_{0}$ and conclude $\beta_{1} \neq 0 \Rightarrow$ evidence suggests a positive linear relationship between \texttt{lean} and \texttt{year}. 
+
+
+7. Construct a 90% confidence interval for $\mathrm{E}[Lean]$ in year 1984
+
+**Code:**
+
+```{r}
+predict(lmfit, newdata = data.frame(year = 1984), interval = "confidence", level = 0.9)
+```
+
+8. Use residuals to check model assumptions 
+
+**Code:**
+
+```{r}
+par(mar = c(4, 4, 1, 0.5), mgp = c(3, 1, 0), las = 1, family = "serif")
+plot(lmfit, which = 1:3)
+```
+
+**Answer:**
+
+There are no major concerns about model assumptions, namely linearity, constant variance, normality, and independence, given the size of the data. The relatively large deviation of the last observation may raise some concerns, but it is also possible that it is simply due to random fluctuation, given the small sample size. Below is a simulated example to assess this point for the residuals versus the fitted values plot, under which the model assumptions hold, serving as a benchmark.
+
+
+```{r}
+N <- 999
+sig <- summary(lmfit)$sigma
+err <- replicate(N, rnorm(13, sd = sig))
+lowess_sim <- apply(err, 2, lowess)
+fitted <- lmfit$fitted.values
+res <- lmfit$residuals
+lowess_res <- lowess(res)
+
+library(scales)
+par(mar = c(4, 4, 1, 0.5), mgp = c(2.5, 1, 0), family = "serif")
+plot(fitted, res, pch = 16, col = "blue", ylim = c(-0.001, 0.001))
+for (i in 1:N){
+  smoothed_res <- lowess(lmfit$fitted.values, err[, i])
+  lines(smoothed_res, col = alpha("gray", 0.5), lwd = 0.35) 
+}
+points(fitted, res, pch = 16, col = "blue")
+abline(h = 0, lwd = 1.5, lty = 2)
+lines(fitted, lowess_res$y, col = "red", lwd = 1) 
+```
+
+
+
+9. Would it be a good idea to use the fitted linear regression equation to predict \texttt{lean} in year 2010? Explain your answer. 
+
+**Answer:**
+
+This is an example of extrapolation in regression, and most statistics textbooks advise against doing so, even if the fit within the data range is nearly perfect. In this particular example, we have a good reason not to carry out such an extrapolation. Please take a look at the third paragraph of the wiki page [\color{blue}{(link)}](https://en.wikipedia.org/wiki/Leaning_Tower_of_Pisa#Construction) to find out why.
+
+
+

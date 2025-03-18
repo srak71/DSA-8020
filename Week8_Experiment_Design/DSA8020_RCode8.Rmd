@@ -1,0 +1,168 @@
+---
+title: "DSA 8020 R Session 8: Replication, Blocking, and Randomization"
+author: "Whitney"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+    fig_width: 5
+    fig_height: 4
+    fig_caption: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Objective
+This \texttt{R} session demonstrates the principles of *replication*, *blocking*, and *randomization* in the design and analysis of experiments. By the end of this exercise, you should understand:
+
++ The role of *randomization* in ensuring unbiased results.
++ Why *replication* is crucial for estimating variability.
++ How *blocking* helps reduce confounding variables.
+
+
+## Experimental Scenario
+
+In this experiment, we will use **paper helicopters** to study the effect of two **helicopter wing lengths** on **flight time (seconds)**. The experiments are performed by **different experimenters**, which introduces a potential blocking factor.
+
+
+## Load Necessary Libraries
+
+```{r,message=FALSE}
+library(dplyr)
+library(ggplot2)
+```
+
+## Step 1: Experimental Design
+
+### 1.1 Define Factors and Levels
+
++ *Treatment:* Wing length ("Short", 5 cm or "Long", 10 cm)
++ *Blocking Factor:* Experimenter (1 or 2)
++ *Response Variable:* Flight time (seconds)
+
+Each treatment level will be **replicated** 10 times. Moreover, we will **block** the experiment by assigning a single experimenter to test all treatment levels within a block to control for variability due to individual differences in timing.
+
+### 1.2 Randomization
+
+To minimize bias, we will **randomize** the order of helicopter drops.
+
+## Step 2: Data Collection
+
+### 2.1 Experiment configuration
+
+```{r}
+rep <- 10
+treatment <- rep(c("Short", "Long"), each = rep)
+block <- rep(c("Experimenter 1", "Experimenter 2"), times = rep)
+cbind(treatment, block)
+```
+
+### 2.2 Simulating Flight Time Data
+
+For demonstration, we simulate flight times assuming variability:
+
++ Short wings: $\mu$ = 2.6 sec, $\text{sd} = \sqrt{\text{Var}}$ = 0.5 sec
++ Long wings: $\mu$ = 3.2 sec, $\text{sd} = \sqrt{\text{Var}}$ = 0.6 sec
+
+Additionally, we assume there is a measurement error for experimenters, with the first experiment tending to underestimate ($\mu$ = -0.3 sec) while the second overestimates ($\mu$ = 0.3 sec).
+Finally, we assume there is an order effect that negatively biases the flight time over runs (and therefore, it is important to randomize the runs to mitigate such a bias).
+
+
+```{r}
+set.seed(123)  # For reproducibility
+n <- length(treatment)
+effect <- c(rnorm(rep, mean = 2.6, sd = 0.5),  # Short
+            rnorm(rep, mean = 3.2, sd = 0.6))  # Long
+experimenter <- rnorm(n, mean = rep(c(-0.3, 0.3), rep), sd = 0.1)
+order <- seq(0.5, -0.5, len = n)
+time1 <- effect + experimenter + order 
+# Randomize the order
+run_order <- sample(n)
+time2 <- effect + experimenter + order[run_order] 
+
+data1 <- data.frame(Treatment = treatment, Block = block, Response = time1)
+data2 <- data.frame(Treatment = treatment, Block = block, Response = time2)
+```
+
+## Step 3: Summarizing and Visualizing the Data
+
+Without and with randomization
+
+```{r}
+tapply(data1$Response, list(data1$Treatment, data1$Block), mean)
+tapply(data2$Response, list(data1$Treatment, data1$Block), mean)
+```
+Without randomization
+
+```{r}
+ggplot(data1, aes(x = Treatment, y = Response, color = Block)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.2, alpha = 0.7) +
+  theme_minimal() +
+  labs(title = "Effect of Wing length on Flight time",
+       x = "Wing length",
+       y = "Flight time (seconds)")
+```
+
+With randomization
+
+```{r}
+ggplot(data2, aes(x = Treatment, y = Response, color = Block)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.2, alpha = 0.7) +
+  theme_minimal() +
+  labs(title = "Effect of Wing length on Flight time",
+       x = "Wing length",
+       y = "Flight time (seconds)")
+```
+
+
+## Step 4: Analyze the Data
+
+### 4.1 Perform ANOVA to Assess Treatment and Block Effects
+
+Model 1: did not account for the block effect and was not randomized to eliminate the run order bias
+
+```{r}
+model1 <- aov(Response ~ Treatment, data = data1)
+summary(model1)
+coef(model1)
+```
+
+Model 2: did not account for the block effect but was randomized to eliminate run order bias
+
+```{r}
+model2 <- aov(Response ~ Treatment, data = data2)
+summary(model2)
+coef(model2)
+```
+
+Model 3: did account for the block effect but was not randomized to eliminate the run order bias
+
+```{r}
+model3 <- aov(Response ~ Treatment + Block, data = data1)
+summary(model3)
+coef(model3)
+```
+Model 4: did account for the block effect and was randomized to eliminate the run order bias
+
+```{r}
+model4 <- aov(Response ~ Treatment + Block, data = data2)
+summary(model4)
+coef(model4)
+```
+
+### 4.2 Interpretation
+
++ *Replication* ensures that variability can be measured within treatments.
++ *Blocking* accounts for the effect of different experimenters.
++ *Randomization* prevents systematic biases in treatment allocation.
+
+
+## Conclusion
+
+By conducting this experiment with proper replication, blocking, and randomization, we ensure a robust and reliable analysis of treatment effects. The ANOVA results indicate whether wing length significantly affects flight time while controlling for experimenter variation.
+
+
