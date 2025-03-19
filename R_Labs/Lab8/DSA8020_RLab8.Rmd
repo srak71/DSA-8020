@@ -1,0 +1,191 @@
+---
+title: 'DSA 8020 R Lab 8: Randomized Complete Block Designs and Factorial Designs'
+author: "saransh rakshak"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(car)
+```
+
+
+A researcher wishes to determine whether four different tips produce different hardness readings on a Rockwell hardness tester, which operates by pressing a tip into a metal test 'coupon.' Since the coupons are large enough to test four tips, a RCBD (Randomized Complete Block Design) can be used, with one coupon serving as a block. The dataset 'tip_hardness.csv' can be found on Canvas.
+
+
+1. Load the data into R.
+
+**Code:**
+
+```{r}
+tip_data <- read.csv("tip_hardness.csv")
+head(tip_data)
+summary(tip_data)
+```
+
+---
+
+2. Make side-by-side boxplots by treatment. 
+
+**Code:**
+
+```{r}
+# converting tip to categorical
+tip_data <- tip_data %>%
+  mutate(Tip = as.factor(Tip))
+
+ggplot(tip_data, aes(x = Tip, y = Hardness, fill = Tip)) +
+  geom_boxplot() +
+  labs(title = "Boxplot - Hardness by Tip Type", x = "Tip Type", y = "Hardness") +
+  theme_minimal()
+```
+
+---
+
+3. Write down the effects model and explain each term within the model, including the assumptions concerning the random error.
+
+**Answer:**
+
+**RCBD Effects Model:** $Y_{ij} = \mu + \tau_i + \beta_j + \epsilon_{ij}$
+
+- $Y_{ij}$: Hardness value for *i*th Tip in *j*th Coupon.
+
+- $\mu$: Mean across all Tips/Coupons.
+
+- $\tau_i$: Effect of *i*th Tip (treatment).
+
+- $\beta_j$: Effect of *j*th Coupon (block).
+
+- $\epsilon_{ij}$: Random error. Assumptions are:
+
+  - Independent: $\epsilon_{ij}$ must be independent for each observation.
+    
+  - Normality: $\epsilon_{ij}$ must follow normal distribution.
+    
+  - Homoscedasticity: $\epsilon_{ij}$ must have constant variance across treatment/blocks.
+
+---
+
+4. Perform an overall $F$-test to the treatment effects using ANOVA, state the hypotheses, $p$-value, and conclusion. 
+
+- Null ($H_0$): There is no difference in hardness between tip types.
+
+- Alternate ($H_A$): At least one tip creates a different hardness.
+
+**Code:**
+
+```{r}
+tip_anova <- aov(Hardness ~ Tip + Coupon, data = tip_data)
+summary(tip_anova)
+```
+
+**Answer:**
+
+- p-value of Tip (0.00196) is lower than our alpha = 0.05. Thus we reject null hypothesis $H_0$ and can conclude that at least one tip produces a different hardness.
+
+---
+
+5. Use an interaction plot to assess the additive assumption.
+
+**Code:**
+
+```{r}
+interaction.plot(
+  x.factor = tip_data$Tip,
+  trace.factor = tip_data$Coupon, 
+  response = tip_data$Hardness, 
+  col = c("red", "blue", "green", "purple"),
+  main = "Tip vs. Coupon Interaction Plot",
+  xlab = "Tip Type",
+  ylab = "Hardness"
+  )
+```
+
+**Answer:**
+
+- Some variation in slopes across Coupon, but no extreme crossing of Coupon lines. SDhows presence of minor interactions but additive assumption not violated. 
+
+---
+
+In a study to evaluate the impact of a certain bacterial strain (mycoplasma) on the development of birds, birds inoculated with bacteria or a control injection were studied in both cold and warm temperature-controlled rooms. The response variable of interest was the bill length of birds in the rooms. The rooms served as the experimental units, with either cold or warm temperatures, and contained either control or mycoplasma-inoculated birds. Two runs of each combination were performed. The data is given below:
+
+Bact | Warm  | Cold 
+-----| ------|-----
+Control| 40.37, 41.71| 39.77, 40.23
+Mycoplasma|40.21, 40.78|39.19, 38.95
+
+6. Enter the data into R.
+
+**Code:**
+
+```{r}
+bill_data <- tibble(
+  Bact = rep(c("Control", "Mycoplasma"), each = 4),
+  Temp = rep(c("Warm", "Cold"), times = 4),
+  Bill_Len = c(40.37, 39.77, 41.71, 40.23, 40.21, 39.19, 40.78, 38.95)
+)
+
+bill_data
+```
+
+---
+
+7. Construct an ANOVA table that includes the main effects for bacteria and temperature and their interaction. Test whether the main effects impact bill length. 
+
+**Code:**
+
+```{r}
+# Convert to factor
+bill_data <- bill_data %>%
+  mutate(
+    Bact = as.factor(Bact),
+    Temp = as.factor(Temp)
+  )
+
+# Perform ANOVA
+bill_anova <- aov(Bill_Len ~ Bact * Temp, data = bill_data)
+
+# Summarize ANOVA results
+anova_results <- summary(bill_anova)
+anova_results
+```
+
+**Answer:**
+
+- Bacteria: p-value (0.129) is greater than our alpha (0.05). We can conclude that bact treatment does not have effect on bill length.
+
+- Temperature: p-value (0.0332) is less than our alpha (0.05), indicating that temperature has statistically significant effect on bill length.
+
+- Bact:Temp (Interaction): p-value (0.64) greater than alpha (0.05), thus there is no significant interaction between bacteria treatment and temperature.
+
+---
+
+8. Make an interaction plot and comment on the interaction effect.
+
+**Code:**
+
+```{r}
+interaction.plot(
+  x.factor = bill_data$Bact,
+  trace.factor = bill_data$Temp,
+  response = bill_data$Bill_Len,
+  col = c("red", "blue"),
+  main = "Bact vs. Temp Interaction Plot",
+  xlab = "Bacteria Treatment",
+  ylab = "Bill Length"
+)
+```
+
+**Answer:**
+
+- Our lines for Warm and Cold do not cross, confirming our non-significant interaction shown by ANOVA (p-val: 0.64). Thus we can conclude that the effect of bacteria on bill length is independent of temperature.
+
+- Result: Interaction between Bacteria and Temperature does not significantly affect Bill Length.
+
+
+
