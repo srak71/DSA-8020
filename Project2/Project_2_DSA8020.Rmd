@@ -247,7 +247,7 @@ Answer the following questions:
 ```{r}
 copter_df <- data.frame(x1 = x1, x2 = x2, y = y)
 
-# fitting GAM regression
+# fitting GAM
 copter_gam <- gam(y ~ x1 + x2, data = copter_df)
 summary(copter_gam)
 ```
@@ -260,7 +260,9 @@ grids <- expand.grid(x1 = x1g, x2 = x2g)
 
 # pred on grid
 grids$pred_y <- predict(copter_gam, newdata = grids)
+```
 
+```{r}
 # visual pred surface heatmap
 ggplot(grids, aes(x = x1, y = x2, fill = pred_y)) +
   scale_fill_viridis_c() + # match contour plt color
@@ -285,15 +287,45 @@ ggplot(grids, aes(x = x1, y = x2, z = pred_y)) +
 ### B. Compute and visualize the prediction uncertainty using a Gaussian process model. Briefly comment on your findings.
 
 ```{r}
-# fitting gaussian model
-copter_GPFit <- mlegp(copter_df[, 1:2], copter_df[, 3])
-summary(copter_GPFit)
+library(GPfit)
+
+# helper func
+norm <- function(x) {
+  x_normed <- (x - min(x)) / (max(x) - min(x))
+  return(x_normed)
+  }
+
+# normalizing data
+copter_df$x1_scaled <- norm(copter_df$x1)
+copter_df$x2_scaled <- norm(copter_df$x2)
+
+# fitting gaus process
+gaus_model <- GP_fit(copter_df[, c("x1_scaled", "x2_scaled")], copter_df$y)
+
+# dense grid
+x1g <- seq(6, 10, 0.1)
+x2g <- seq(6, 12, 0.2)
+grids2 <- expand.grid(x1 = x1g, x2 = x2g)
+
+# norm dense grid
+grids2$x1_scaled <- (grids2$x1 - min(copter_df$x1)) / (max(copter_df$x1) - min(copter_df$x1))
+grids2$x2_scaled <- (grids2$x2 - min(copter_df$x2)) / (max(copter_df$x2) - min(copter_df$x2))
+
+# preding on gaus process model
+gaus_preds <- predict(gaus_model, grids2[, c("x1_scaled", "x2_scaled")])
+# pred uncertainty
+grids2$pred_sd <- sqrt(gaus_preds$MSE)
 ```
 
 ```{r}
-# make preds on dense grid
-# y_hats <- predict(copter_GPFit, grids, se.fit = TRUE)
-# print(y_hats)
+ggplot(grids2, aes(x = x1, y = x2, fill = pred_sd)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  labs(title = "Heatmap - Gaussian Prediction Uncertainty",
+       x = "Rotor Len",
+       y = "Leg Len",
+       fill = "prediction standard deviation") +
+  theme_minimal()
 ```
 
 
