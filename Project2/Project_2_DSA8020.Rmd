@@ -455,15 +455,15 @@ ggplot(grids2, aes(x = x1, y = x2, fill = pred_sd)) +
   
     - Both Rotor and Leg length are at their maximum value, or when both are at their minimum value.
 
-and is specifically the greatest when...
+- Uncertainty is specifically the greatest when...
 
     - Rotor length is at its minimum and Leg length is slightly above 10cm.
     
-and
+  and
 
     - Leg length is at its minimum and Rotor length is 7cm or very slightly above.
     
-and
+  and
 
     - Leg and Rotor length both are at their maximum value of 12cm and 10cm respectively.
     
