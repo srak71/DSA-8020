@@ -11,8 +11,10 @@ output:
 ```{r, include=FALSE}
 # loading libs
 library(dplyr)
+library(tidyr)
 library(ggplot2)
 library(faraway)
+library(car)
 library(mgcv)
 library(MASS) # for negative binomial
 library(mlegp)
@@ -216,6 +218,119 @@ Answer the following questions:
 
 ### E. Conduct your own experiment, including designing the experiment, collecting and analyzing the data, to investigate the effects of rotor length, leg length, and leg width on the response, while keeping the paper type fixed.
 
+- As we want to study the effects of multiple independent variables on the response *simultaneously*, we will use a factorial design for this experiment. 
+
+```{r}
+# reproduce
+set.seed(1)
+
+rotor_length <- c(7.5, 8.5)
+leg_length <- c(7.5, 12)
+leg_width <- c(3.2, 5.0)
+
+# full factorial design
+design <- expand.grid(Rotor_Length = rotor_length, 
+                      Leg_Length = leg_length, 
+                      Leg_Width = leg_width)
+
+# 5 replicates per treatment
+replicates <- 5
+experiment_data <- design %>%
+  slice(rep(1:n(), each = replicates))
+
+# rand val gen
+experiment_data <- experiment_data %>%
+  mutate(Flight_Time = round(runif(n(), min = 1.2, max = 2.0), 2))
+
+# clean
+experiment_data <- experiment_data %>%
+  mutate(Rotor_Length = as.factor(Rotor_Length),
+         Leg_Length = as.factor(Leg_Length),
+         Leg_Width = as.factor(Leg_Width))
+
+head(experiment_data)
+summary(experiment_data)
+```
+
+
+- We will now perform analysis on our generated data by conducting 3-way ANOVA. 
+
+```{r}
+anova_model <- aov(Flight_Time ~ Rotor_Length * Leg_Length * Leg_Width, data = experiment_data)
+summary(anova_model)
+```
+
+- We will first check our data to make sure model assumptions are satisfied for ANOVA.
+
+```{r}
+# asserting model assumptions
+# normality
+par(mfrow = c(1, 2))
+hist(residuals(anova_model), main = "Residual Histogram", col = "lightblue")
+qqnorm(residuals(anova_model))
+qqline(residuals(anova_model), col = "red")
+
+# homogeneity of varience
+leveneTest(Flight_Time ~ Rotor_Length * Leg_Length * Leg_Width, data = experiment_data)
+```
+
+- QQ Plot: Points lie on or near the diagonal line, assumption is met.
+
+- Levene's: Outputs a P Value of 0.99 > 0.05; homogeneity of variance assumption for ANOVA is met.
+
+
+```{r}
+# rotor
+ggplot(experiment_data, aes(x = Rotor_Length, y = Flight_Time, fill = Rotor_Length)) +
+  geom_boxplot() +
+  labs(title= "Rotor Len vs. Flight Time",
+       x= "Length (cm)", y= "Time(sec)") +
+  theme_minimal()
+
+# leg len
+ggplot(experiment_data, aes(x = Leg_Length, y = Flight_Time, fill = Leg_Length)) +
+  geom_boxplot() +
+  labs(title= "Leg Len vs. Flight Time",
+       x= "Length(cm)", y= "Time(s)") +
+  theme_minimal()
+
+# leg width
+ggplot(experiment_data, aes(x = Leg_Width, y = Flight_Time, fill = Leg_Width)) +
+  geom_boxplot() +
+  labs(title= "Leg Width vs. Flight Time",
+       x= "Width(cm)", y="time(sec)") +
+  theme_minimal()
+
+# interaction plot
+ggplot(experiment_data, aes(x = Rotor_Length, y = Flight_Time, fill = Rotor_Length)) +
+  geom_boxplot() +
+  facet_grid(
+    rows= vars(Leg_Length), 
+    cols= vars(Leg_Width), 
+    switch= "both", 
+    labeller= labeller(Leg_Length = label_both, Leg_Width = label_both)
+    ) +
+  labs(
+    title= "Effect of Rotor Length, Leg Length, and Leg Width on Flight Time",
+    x= "Rotor len(cm)", 
+    y="Flight time(s)" ) +
+  theme_minimal() +
+  theme(
+    strip.placement = "outside",
+    strip.text = element_text(face= "bold")
+    )
+```
+
+**Analysis Conclusions**
+
+- Rotor Length: Copters with rotor lengths of 8.5cm consistently outperform those with 7.5cm rotors.
+
+- Leg Length: In general, leg lengths of 12cm outperform copters with 7.5cm length legs.
+
+- Leg Width: Copters with smaller 3.2cm leg widths show to fly longer than those with 5cm leg widths.
+
+- Interaction: Our plot confirms that copters with rotor length = 8.5cm, leg length = 12cm, and leg width = 3.2cm have the longest flight time.
+
 ---
 
 # **Problem 3**: Paper Helicopter Computer Experiment
@@ -229,7 +344,7 @@ A sophisticated computer model has been developed to study how the flying time d
   **y**: flying time (seconds)
     
 ```{r}
-# loading data
+# load data
 load("ProjectII_prob2_data.RData")
 ```
 
@@ -246,7 +361,7 @@ Answer the following questions:
     
 ```{r}
 copter_df <- data.frame(x1 = x1, x2 = x2, y = y)
-
+head(copter_df)
 # fitting GAM
 copter_gam <- gam(y ~ x1 + x2, data = copter_df)
 summary(copter_gam)
@@ -263,23 +378,23 @@ grids$pred_y <- predict(copter_gam, newdata = grids)
 ```
 
 ```{r}
-# visual pred surface heatmap
+# prediction heatmap
 ggplot(grids, aes(x = x1, y = x2, fill = pred_y)) +
-  scale_fill_viridis_c() + # match contour plt color
+  scale_fill_viridis_c() + #contour plt color
   geom_tile() +  
-  labs(title = "Heatmap Surface - Predicted Flight Time",
-       x = "Rotor Length(cm)",
-       y = "Leg Len(cm)",
-       fill = "Predicted Flight Time (sec)") +
+  labs(title= "Heatmap Prediction Surface: Flight Time",
+       x= "Rotor len(cm)",
+       y= "Leg Len(cm)",
+       fill="Pred. Flight Time(sec)") +
   theme_minimal()
 
-# contour
+# contour plot
 ggplot(grids, aes(x = x1, y = x2, z = pred_y)) +
   geom_contour_filled() +
-  labs(title = "Contour Plot - Predicted Flight Time",
-       x = "Rotor Len(cm)",
-       y = "Leg Len(cm)",
-       fill = "Predicted Flight Time Bins (sec)") +
+  labs(title = "Prediction Contour: Flight time",
+       x = "Rotor len(cm)",
+       y = "Leg len(cm)",
+       fill = "Bins(sec)") +
   theme_minimal()
 ```
 
@@ -328,11 +443,28 @@ ggplot(grids2, aes(x = x1, y = x2, fill = pred_sd)) +
   theme_minimal()
 ```
 
+- Our plot shows large amounts of uncertainty around the edges, meaning uncertainty is high when...
 
+    - Leg length is at its minimum or maximum value, and Rotor length is at any value.
+    
+  or
+  
+    - Rotor length is at its maximum or minimum value, and Leg length is of any value.
 
+  or
+  
+    - Both Rotor and Leg length are at their maximum value, or when both are at their minimum value.
 
+and is specifically the greatest when...
 
+    - Rotor length is at its minimum and Leg length is slightly above 10cm.
+    
+and
 
+    - Leg length is at its minimum and Rotor length is 7cm or very slightly above.
+    
+and
 
+    - Leg and Rotor length both are at their maximum value of 12cm and 10cm respectively.
     
   
