@@ -1,0 +1,269 @@
+---
+title: 'DSA 8020 R Lab 9: Time Series Analysis'
+author: "Saransh Rakshak"
+date: "Due 4/17/2025"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tibble)
+library(ggplot2)
+```
+
+
+1. Load the data into R. How many observations are in this time series?
+
+**Code:**
+
+```{r}
+load("RLab9.RData")
+print("Time Series: y")
+print(c("Type:", class(y)))
+num_obs <- length(y)
+print(c("# obervations: ", num_obs))
+```
+
+**Answer:**
+
+There are 200 observations in time series 'y'.
+
+---
+
+2. Plot the time series and describe its features.
+
+**Code:**
+
+```{r}
+plot(y, main = "Time series - y", ylab = "observed value", xlab = "time")
+```
+
+**Answer:**
+
+There is a clear upward trend across the time series as time increases.
+
+Data trend shows heteroscedasticity, specifically:
+
+    - Early in series, values range from 0 to 5.
+    
+    - Later in series, values range from 7 to 10.
+    
+    - This suggests non-constant variance.
+    
+Possible outliers between time 100 and 130.
+
+    - Sharp drops & spikes indicate possible anomalies.
+
+---
+
+3. If there is a trend component, estimate it. Explain the structure of the trend model and write down the estimated trend.
+
+Estimating trend using Linear Model with structure:
+
+$y_{t} = \beta_{0} + t\beta_{1} + \epsilon_t$
+
+  - $y_{t}$: observed value at time t.
+  
+  - $\beta_{0}$: intercept.
+  
+  - $\beta_{1}$: slope (trend).
+  
+  - $\epsilon_{t}$: random error.
+
+**Code:**
+
+```{r}
+time_index <- 1:length(y)
+trend_lm <- lm(y ~ time_index)
+summary(trend_lm)
+```
+
+This provides us with an estimated trend equation of:
+
+$\hat{y_{t}} = 0.4339 + t * 0.0461$
+
+```{r}
+# plotting with estimated trend line
+plot(y, main = "Time series - y", ylab = "observed value", xlab = "time")
+abline(trend_lm, col= "red", lwd= 2)
+```
+
+
+**Answer:**
+
+Observations:
+
+  - Slope = 0.0461: Strong upwards trend, reveals that on average, series increases by 0.0461 units per time point.
+  
+  - R-squared = 0.6701: 67% of variation in series y is explained by a linear trend.
+  
+  - Residual Standard Error = 1.877: Average distance between observed values and trend line.
+
+---
+
+4. Remove the estimated trend component, then plot the ACF and PACF. Based on these plots, suggest a few possible ARMA model orders.
+
+**Code:**
+
+```{r}
+# remove trend
+no_trend_y <- residuals(lm(y ~ time_index))
+
+# plot ACF/PACF
+par(mfrow = c(1, 2))  # side-by-side plots
+acf(no_trend_y, main = "Detrended y ACF")
+pacf(no_trend_y, main = "Detrended y PACF")
+```
+
+**Answer:**
+
+Plots
+
+  - ACF: Spikes at lags 1 - 3 then slow taper off, suggesting MA component.
+      
+  - PACF: Sharp cutoff after lag 1 with small values afterwards, suggesting AR(1) components.
+  
+Possible ARIMA Choices:
+
+    - MA(1)
+    
+    - AR(1)
+    
+    - ARMA(1,1)
+
+---
+
+5. Fit the possible ARMA models identified from the previous question. Select the best model based on AIC. 
+
+
+**Code:**
+
+```{r}
+library(forecast)
+
+# fitting models
+fit_ma1 <- Arima(no_trend_y, order= c(0, 0, 1))
+fit_ar1 <- Arima(no_trend_y, order= c(1, 0, 0))
+fit_arma11 <- Arima(no_trend_y, order= c(1, 0, 1))
+
+# compare AIC
+aic_no_trend <- AIC(fit_ar1, fit_ma1, fit_arma11)
+aic_no_trend
+```
+
+**Answer:**
+
+Result of AIC:
+
+    - ARMA(1, 1) shows the lowest AIC, suggesting it is marginally the best model to select.
+    
+    - AR(1) has a slightly higher AIC than ARMA(1,1); showing it is still a possible candidate for our model choice.
+
+---
+
+6. Diagnose if the selected time series model sufficiently accounts for temporal dependence.
+
+**Code:**
+
+```{r}
+checkresiduals(fit_arma11)
+```
+
+**Answer:**
+
+Residual ARIMA(1,0,1) with non-zero mean Plot:
+
+  - Shows residuals located around our 0 axis with no visible pattern.
+  
+  - Residuals appear static.
+  
+Autocorrelation Function (ACF) Plot:
+
+  - Residuals do not appear to be significantly auto correlated - main lag between confidence bands (blue).
+  
+  - Insignificant amount of small spikes in residuals.
+  
+Histogram/Density Plot:
+
+  - Both histogram and density curve indicate normal distribution.
+  
+  - Mild skew, insignificant.
+  
+
+Based on the residual plots and histogram/density, we can safely determine that our ARIMA model sufficiently accounts for temporal dependence in no trend series. 
+
+---
+
+7. Use the *Arima* function in the *forecast* package to fit the first 190 observations of the original time series and perform a forecast for the last 10 observations. Plot the forecast and forecast uncertainty and comment on the forecast.
+
+
+**Code:**
+
+```{r}
+# Create training and test sets
+y_train <- y[1:190]
+y_test <- y[191:200]
+
+# fit first 190 to ARIMA(1,1)
+fit_trained <- Arima(y_train, order= c(1, 0, 1))
+forecast_ten <- forecast(fit_trained, h= 10)
+
+# creating clean frame for forecasts
+last_ten <- as_tibble(forecast_ten) %>%
+  mutate(time= 191:200)
+
+forecast_frame <- tibble(
+  time= 191:200,
+  actual= as.numeric(y_test)
+)
+```
+
+```{r}
+# plotting forecast
+library(ggplot2)
+ggplot(last_ten, aes(x= time)) +
+  geom_ribbon(aes(ymin= `Lo 95`, ymax= `Hi 95`), alpha= 0.5) +
+  geom_ribbon(aes(ymin= `Lo 80`, ymax= `Hi 80`), alpha= 0.5) +
+  geom_line(aes(y= `Point Forecast`), color= "blue", linewidth= 1.2) +
+  geom_point(data= forecast_frame, aes(y= actual), color= "red") +
+  geom_line(data= forecast_frame, aes(y= actual), color= "red") +
+  labs(title= "Forecast(blue) v Actual(red) ARIMA",
+       x= "Time",
+       y= "Forecasted value",
+       caption= "Lo95-Hi95:Light; Lo80-Hi80:Dark.") +
+  theme_minimal()
+```
+
+**Answer:**
+
+**Forecast vs. Observed Values: ** 
+
+Blue Line (Forecasted)
+
+  - Shows our predicted (forecasted) trend from model ARIMA(1,0,1) for time 191 to 200.
+  
+  - Smooth pattern of values that slightly decline over time.
+  
+  - Relatively flat showing little anticipation for strong upwards or downwards swings.
+    
+Red Line (Actual)
+
+  - Real values rose above our forecast and peaked at time 193 to 195. Followed by gradual decline.
+  
+  - Reveals that our forecast model did not properly capture short term increase in observations, underestimating growth.
+  
+**Uncertainty: **
+
+We can see that uncertainty increases over time for both Lo/Hi 95 and Lo/Hi 80 values; expected for time series forecast. Actual values (red) occasionally exceed our 80% band and are even close to the edge of the 95% interval. This indicates that either our estimated uncertainty is too narrow, or, our model is lacking proper training of some short term dynamic.
+
+**Observations: **
+
+Our model fit is very conservative (smooth) but reasonably fits our data. However, our model is under predicting some type of temporary rise in values from our test set. Our uncertainty intervals are unable to properly capture volatility of real observations.  
+
+
+
+
