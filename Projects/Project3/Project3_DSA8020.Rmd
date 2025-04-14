@@ -1,0 +1,79 @@
+---
+title: "Project 3 - DSA 8020"
+author: "By: Saransh Rakshak"
+date: "Due: Thursday May 1, 2025"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+---
+
+# Project Description
+
+The ERA-Interim is a global atmospheric reanalysis dataset. Reanalysis refers to the process of producing spatially and temporally gridded datasets through data assimilation, primarily for climate monitoring and analysis. In the R data file **NA_MaxT_ERA.RData**, you will find daily maximum temperature values from *1979* to *2017*, with a spatial resolution of approximately 80 km. The original global dataset has been subsetted to a region covering the contiguous United States and extending into Canada and Mexico.
+
+In Problems 1 and 2, you are required to analyze an ERA-Interim average temperature time series at yearly and monthly temporal resolutions at a spatial location of your choice.
+
+---
+
+# Problem 1. Analyzing Yearly Average Temperatures Time-Series
+
+### 1. The following steps are needed to extract the annual mean temperatures at the specified location from the original dataset with daily temperatures at thousands of locations:
+
+#### a. First, use the following R script to load the R data object:
+
+```{r}
+load("NA_MaxT_ERA.RData")
+NA_MaxT <- NA_MaxT - 273.15 # change from Kelvin to Celsius
+nlon <- length(NA_lon); nlat <- length(NA_lat)
+nmon <- 12; nyr <- 39 # numbers of month/year
+```
+
+#### b. Second, choose a location of interest (with the information of longitude and latitude) and identify the nearest ERA grid cell to the chosen location. Below you can find a script to get the correct ERA grid cell for Clemson:
+
+```{r}
+# Clemson Example
+library(fields)
+Clemson.lon.lat <- c(-82.8374, 34.6834)
+# You can get lon/lat infromation from google
+dist2Clemson <- rdist.earth(
+  matrix(Clemson.lon.lat, 1, 2), 
+  expand.grid(NA_lon, NA_lat), 
+  miles = F
+  )
+id <- which.min(dist2Clemson)
+(lon_id <- id %% nlon)
+(lat_id <- id %/% nlon + 1)
+# Check
+(rdist.earth(matrix(Clemson.lon.lat, 1, 2),
+matrix(c(NA_lon[lon_id], NA_lat[lat_id]), 1, 2), miles = F)
+== min(dist2Clemson))
+```
+
+```{r}
+library(fields)
+Monterey.lon.lat <- c(-121.8979, 36.5973)
+dist2Monterey <- rdist.earth(
+  matrix(Monterey.lon.lat, 1, 2), 
+  expand.grid(NA_lon, NA_lat), 
+  miles = F
+  )
+
+id <- which.min(dist2Monterey)
+
+(lon_id <- id %% nlon)
+(lat_id <- id %/% nlon + 1)
+
+(rdist.earth(
+  matrix(Monterey.lon.lat, 1, 2),
+  matrix( c(NA_lon[lon_id], NA_lat[lat_id]), 1, 2),
+  miles = F
+  )== min(dist2Monterey))
+```
+
+
+
+
+
+
+
