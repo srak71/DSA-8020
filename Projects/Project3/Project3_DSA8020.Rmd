@@ -8,6 +8,11 @@ output:
     toc_depth: 3
 ---
 
+```{r}
+print('hi')
+```
+
+
 # Project Description
 
 The ERA-Interim is a global atmospheric reanalysis dataset. Reanalysis refers to the process of producing spatially and temporally gridded datasets through data assimilation, primarily for climate monitoring and analysis. In the R data file **NA_MaxT_ERA.RData**, you will find daily maximum temperature values from *1979* to *2017*, with a spatial resolution of approximately 80 km. The original global dataset has been subsetted to a region covering the contiguous United States and extending into Canada and Mexico.
