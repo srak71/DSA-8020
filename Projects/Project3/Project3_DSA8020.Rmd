@@ -1,6 +1,6 @@
 ---
 title: "Project 3 - DSA 8020"
-author: "By: Saransh Rakshak"
+author: "Saransh Rakshak"
 date: "Due: Thursday May 1, 2025"
 output:
   pdf_document:
@@ -8,8 +8,9 @@ output:
     toc_depth: 3
 ---
 
-```{r}
-print('hi')
+```{r loadlibs, include= FALSE}
+library(fields)
+library(tsfeatures)
 ```
 
 
@@ -38,9 +39,7 @@ nmon <- 12; nyr <- 39 # numbers of month/year
 
 ```{r}
 # Clemson Example
-library(fields)
-Clemson.lon.lat <- c(-82.8374, 34.6834)
-# You can get lon/lat infromation from google
+Clemson.lon.lat <- c(-82.8374, 34.6834) # (lon,lat)
 dist2Clemson <- rdist.earth(
   matrix(Clemson.lon.lat, 1, 2), 
   expand.grid(NA_lon, NA_lat), 
@@ -49,6 +48,7 @@ dist2Clemson <- rdist.earth(
 id <- which.min(dist2Clemson)
 (lon_id <- id %% nlon)
 (lat_id <- id %/% nlon + 1)
+
 # Check
 (rdist.earth(matrix(Clemson.lon.lat, 1, 2),
 matrix(c(NA_lon[lon_id], NA_lat[lat_id]), 1, 2), miles = F)
@@ -56,8 +56,7 @@ matrix(c(NA_lon[lon_id], NA_lat[lat_id]), 1, 2), miles = F)
 ```
 
 ```{r}
-library(fields)
-Monterey.lon.lat <- c(-121.8979, 36.5973)
+Monterey.lon.lat <- c(-121.8979, 36.5973) # (lon,lat)
 dist2Monterey <- rdist.earth(
   matrix(Monterey.lon.lat, 1, 2), 
   expand.grid(NA_lon, NA_lat), 
@@ -75,6 +74,87 @@ id <- which.min(dist2Monterey)
   miles = F
   )== min(dist2Monterey))
 ```
+
+#### c. Third, aggregate the daily data to the annual average time series. You could use the following script to achieve this:
+
+```{r}
+time_series_daily <- NA_MaxT[lon_id, lat_id,]
+print("Daily Time Series summary: ")
+print(summary(time_series_daily))
+```
+
+```{r}
+time_series_yearly <- tapply(time_series_daily, list(yr), mean)
+print("Yearly Time Series summary: ")
+print(summary(time_series_yearly))
+```
+
+### 2. Describe the main features of the annual time series data you extracted.
+
+```{r}
+# using package tsfeatures for feature autoextraction
+yearly_features <- tsfeatures(time_series_yearly)
+print(yearly_features)
+```
+
+Our time series feature analysis using *tsfeatures* for the annual series reveals the following:
+
+| Feature | Value | Analysis |
+|---------|-------|----------|
+|trend    |0.4337 |Moderately strong trend, indicates presence of long term pattern |
+|spike    |0.00042|Extremely low, indicates no significant anomalies or jumps in any given year|
+|linearity|0.08572|Moderately low - some possibility model is linear|
+|curvature|2.27771|High value strongly indicates non-linearity|
+|entropy  |0.9574 |High value, indicates limited predictability and complex relations between the data|
+|x_acf1   |0.4117 |Moderate indication of autocorrelation, any given years values show to depend on its previous year|
+
+### 3. Is it reasonable to assume that there is a linear trend? If so, estimate and remove the trend to get the detrended time series.
+
+```{r}
+plot(time_series_yearly, main = "Annual Time Series Plot", ylab = "Observed Value", xlab = "Time")
+```
+
+
+Our graph does not reveal much significant information. However, based on our previous results from *tsfeatures*, it is still somewhat reasonable to expect the possibility of a linear trend:
+
+    1. trend: value 0.43 shows significant enough trend in data to expect some prediction.
+    
+    2. linearity: while this is not 0, it is still low enough to keep linearity as a reasonable possibility.
+    
+    3. curvature: even though value is high (indicating a non-perfect linear fit), it is still significant enough to keep linearity a potential assumption, especially early on in the analysis.
+    
+Since a linear trend is not out of question for our time series, we will now estimate its value.
+
+```{r}
+yrs <- unique(yr)
+
+# fitting linear model
+lm_annual <- lm(time_series_yearly ~ yrs)
+summary(lm_annual)
+```
+
+```{r}
+plot(
+  x= yrs,
+  y= time_series_yearly,
+  type= "o", # show actual measured points with their continuity over time 
+  main = "Yearly Time Series(Trend)",
+  ylab = "Observed Value",
+  xlab = "Time",
+  panel.first= grid()
+  )
+abline(lm_annual, col = "red", lwd = 2)
+```
+
+Our linear model fit shows a p-value of 0.64, showing that a linear trend is statistically insignificant - leading us to fail to reject the null hypothesis and conclude there is no strong proof of linear behavior in the data. This is further confirmed by our Yearly Time Series(Trend) plot, which shows the data fluctuating significantly around our linear trend line (red) as well as many clearly non-linear patterns. It may be possible that the data could have a different measurable trend such as cyclical behavior, as is not unusual with environmental data.
+
+
+<!-- TODO: Estimate and detrend -->
+
+
+
+
+
 
 
 
