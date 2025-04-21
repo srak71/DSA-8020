@@ -1,0 +1,80 @@
+---
+title: 'DSA 8020 R Lab 10: Interpolation of Spatial Data'
+author: "your name here"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+1. Load the data into R. How many observations are in this spatial data set?
+
+
+**Code:**
+
+```{r}
+load("RLab10.RData")
+```
+
+**Answer:**
+
+2. Plot the spatial data.
+
+**Code:**
+
+```{r, fig.asp=1}
+```
+
+3. Plot the spatial variogram and briefly describe your findings.
+
+**Code:**
+
+```{r}
+
+```
+
+
+**Answer:**
+
+
+4. Fit a Spatial Gaussian process model to the data. Describe the models for the mean function and the covariance function, and report the estimated parameters.
+
+
+**Code:**
+
+```{r}
+
+```
+
+
+
+**Answer:**
+
+
+5. Produce the spatial interpolated map with its associated estimation uncertainty.
+
+
+**Code:**
+
+
+```{r, fig.asp=1}
+
+```
+
+
+
+
+**Answer:**
+
+
+
+
+
+
+
