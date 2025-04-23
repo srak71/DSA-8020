@@ -26,12 +26,12 @@ library(sp)
 
 ```{r}
 load("data/RLab10.RData")
-length(s)
+dim(s)
 ```
 
 **Answer:**
 
-There are 400 observations in spatial data set 's'.  
+There are 200 observations in spatial data set 's'.  
  
 ---
 
