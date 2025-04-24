@@ -12,7 +12,10 @@ output:
 library(fields)
 library(tsfeatures)
 library(forecast)
+<<<<<<< HEAD
 library(zoo)
+=======
+>>>>>>> 380e9e2b1459284b82c39252b2deab0b02d7bdcd
 ```
 
 
@@ -282,6 +285,7 @@ We can predict a temperature anomaly for next year to be approximately $0.2378\,
 
 # Problem 2.  Analyzing Monthly Average Temperature Time Series
 
+<<<<<<< HEAD
 ## Monthly Average
 
 Repeat the analysis for Problem 1 but for the monthly average time series (which canbe extracted using the script below). An important component of this problem is the analysis of seasonal patterns when dealing with sub-annual data. Some .yiytechniques from Week 14 should be employed to complete this problem.
@@ -405,6 +409,8 @@ Unlike our annual series, our monthly series shows ARMA(1,1) to be the **signifi
 
 
 
+=======
+>>>>>>> 380e9e2b1459284b82c39252b2deab0b02d7bdcd
 
 
 
