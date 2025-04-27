@@ -12,10 +12,7 @@ output:
 library(fields)
 library(tsfeatures)
 library(forecast)
-<<<<<<< HEAD
 library(zoo)
-=======
->>>>>>> 380e9e2b1459284b82c39252b2deab0b02d7bdcd
 ```
 
 
@@ -31,7 +28,7 @@ In Problems 1 and 2, you are required to analyze an ERA-Interim average temperat
 
 ---
 
-## 1. The following steps are needed to extract the annual mean temperatures at the specified location from the original dataset with daily temperatures at thousands of locations:
+## **1.1.** The following steps are needed to extract the annual mean temperatures at the specified location from the original dataset with daily temperatures at thousands of locations:
 
 ### a. First, use the following R script to load the R data object:
 
@@ -99,7 +96,7 @@ print(summary(time_series_yearly))
 
 ---
 
-## 2. Describe the main features of the annual time series data you extracted.
+## **1.2.** Describe the main features of the annual time series data you extracted.
 
 ```{r}
 # tsfeatures for (feature autoextraction)
@@ -121,7 +118,7 @@ Our time series feature analysis using *tsfeatures* for the annual series reveal
 
 ---
 
-## 3. Is it reasonable to assume that there is a linear trend? If so, estimate and remove the trend to get the detrended time series.
+## **1.3.** Is it reasonable to assume that there is a linear trend? If so, estimate and remove the trend to get the detrended time series.
 
 ```{r}
 plot(time_series_yearly, main= "Annual Time Series Plot", ylab= "Observed Value", xlab= "Time")
@@ -179,7 +176,7 @@ plot(
 
 ---
 
-## 4. Make **acf** and **pacf** plots for the detrended time series to identify possible **ARMA** models. That is, determine the possible orders *p* for the *AR* component and the orders *q* for the *MA* component.
+## **1.4.** Make **acf** and **pacf** plots for the detrended time series to identify possible **ARMA** models. That is, determine the possible orders *p* for the *AR* component and the orders *q* for the *MA* component.
 
 
 ```{r}
@@ -219,7 +216,7 @@ However, we will also establish simpler models, such as *AR(1)* and *MA(1)* for 
 
 ---
 
-## 5. Fit the possible ARMA models you identified and perform model selection to determine the ‘best’ model.
+## **1.5.** Fit the possible ARMA models you identified and perform model selection to determine the ‘best’ model.
 
 
 To identify our optimal ARMA model for our detrended time series, we will fit our three candidate models we found from ACF/PACF plot analysis.
@@ -264,7 +261,7 @@ Based on model selection criteria, we will select AR(1) model as our choice for 
 
 ---
 
-## 6. Perform a one-year-ahead forecast. Calculate the prediction and provide a 95% Prediction Interval.
+## **1.6.** Perform a one-year-ahead forecast. Calculate the prediction and provide a 95% Prediction Interval.
 
 
 Using the AR(1) model, we will perform a one year forecast to predict the next value in our detrended anomaly series. We will use the *forecast()* function with 'h=1' to compute forecast for one time step ahead, as well as specify a 95% Prediction Interval to quantify uncertainty around forecast.
@@ -285,16 +282,15 @@ We can predict a temperature anomaly for next year to be approximately $0.2378\,
 
 # Problem 2.  Analyzing Monthly Average Temperature Time Series
 
-<<<<<<< HEAD
-## Monthly Average
-
 Repeat the analysis for Problem 1 but for the monthly average time series (which canbe extracted using the script below). An important component of this problem is the analysis of seasonal patterns when dealing with sub-annual data. Some .yiytechniques from Week 14 should be employed to complete this problem.
 
+---
 
-## 2. Describe the main features of the monthly time series data you extracted.
+## **2.2.** Describe the main features of the monthly time series data you extracted.
 
 ```{r}
-time_series_monthly <- tapply(time_series_daily, list(mon), mean)
+time_series_monthly_matrix <- tapply(time_series_daily, list(mon, yr), mean)
+time_series_monthly <- ts(as.vector(time_series_monthly_matrix), start = c(min(yr), min(mon)), frequency = 12)
 monthly_features <- tsfeatures(time_series_monthly)
 
 print("Monthly Time Series summary: ")
@@ -304,33 +300,38 @@ print(monthly_features)
 plot(time_series_monthly, main= "Monthly Time Series Plot", ylab= "Observed Value", xlab= "Time")
 ```
 
-Comparison To Annual Data
+Our time series feature analysis using *tsfeatures* for the monthly series reveals the following:
 
-    - Monthly data shows much stronger trend and non-linearity.
-    
-    - Both annual and monthly time series show moderate autocorrelation and high entropy.
-    
-    - Easier to find distinctions based on seasonality trends which are more predictable.
+| Feature | Value  | Analysis                                                                                      |
+|---------|--------|-----------------------------------------------------------------------------------------------|
+|frequency|12      | Shows strong monthly and seasonal patterns - as expected in climate data.                     |
+|season   |12      | Shows strong monthly and seasonal patterns - as expected in climate data.                     |
+|trend    |0.50617 | Moderate trend can be detected.                                                               |
+|spike    |8.56e-08| Extremely low, shows no outliers in time series data.                                         |
+|linearity|0.555405| Points to nonlinearity, meaning other patterns such as seasonal or cyclical could be at play. |
+|curvature|2.554952| Points to nonlinearity, meaning other patterns such as seasonal or cyclical could be at play. |
+|entropy  |0.497834| Shows high levels of randomness/unpredicability.                                              |
+
+The Monthly TS Plot clearly shows patterns of seasonality - attributed to the periodic peaks and drops 
 
 
 ---
 
-## 3. Is it reasonable to assume that there is a linear trend? If so, estimate and remove the trend to get the detrended time series.
+## **2.3.** Is it reasonable to assume that there is a linear trend? If so, estimate and remove the trend to get the detrended time series.
 
 ```{r}
-mons <- unique(mon)
+time_index <- time(time_series_monthly)
+lm_monthly <- lm(time_series_monthly ~ time_index)
 
-# fitting linear model with trend
-lm_monthly <- lm(time_series_monthly ~ mons)
 summary(lm_monthly)
 ```
 
 ```{r}
 plot(
-  x= mons,
+  x= time_index,
   y= time_series_monthly,
   type= "o", # measured points w/ time continuity 
-  main= "Monthlu Time Series(Trend)",
+  main= "Monthly Time Series(Trend)",
   ylab= "Observed Value",
   xlab= "Time",
   panel.first= grid()
@@ -338,103 +339,141 @@ plot(
 abline(lm_monthly, col= "red", lwd= 2)
 ```
 
-
-Our monthly series again shows a non-significant p-value of 0.1006. Both annual and monthly series do not show any statistically significant linear trends. It should be noted that monthly series data had a stronger potential trend compared to the annual, and may likely have a different but measurable trend model. We will continue by detrending the monthly time series. 
-
-
-```{r}
-# detrended time series
-detend_monthlyTS <- residuals(lm_monthly)
-plot(
-  mons,
-  detend_monthlyTS,
-  type= "o",
-  main= "Detrended Monthly Time Series",
-  ylab= "Detrended Value",
-  xlab= "Time",
-  panel.first= grid()
-)
-```
+There is no strong evidence that the series shows any type of linear trend as it's p-value is very high (0.4712). This is reflected in the plot, where points rarely follow a linear pattern. Thus we will not go through the process of detrending the time series. 
 
 
 ---
 
-## 4. Make **acf** and **pacf** plots for the detrended time series to identify possible **ARMA** models. That is, determine the possible orders *p* for the *AR* component and the orders *q* for the *MA* component.
+## **2.4.** Make **acf** and **pacf** plots for the detrended time series to identify possible **ARMA** models. That is, determine the possible orders *p* for the *AR* component and the orders *q* for the *MA* component.
 
 
 ```{r}
 # ACF plot
-ggAcf(detend_monthlyTS,
+ggAcf(time_series_monthly,
       main= "ACF (Detrended Monthly Series)",
       size= 3, col= "blue")
 
 # PACF plot
-ggPacf(detend_monthlyTS,
+ggPacf(time_series_monthly,
        main= "PACF (Detrended Monthly Series)",
        size= 3, col= "blue")
 ```
 
+ACF Plot:
 
-Similar to the annual series, the monthly series shows a strong spike at lag 1 for both ACF and PACF, suggesting that again, AR(1), MA(1) and ARMA(1,1) wil lbe our best candidates. 
+    - Strong spike at lag 12, indicating seasonality.
+    - All other lags have relatively moderate change between lags.
+    - Good candidates would be MA(1), MA(2)
+  
+PACF Plot:
 
+    - Strong spike at lag 1: AR(1) candidate.
 
+Our plots reveal the best candidate models for fitting are:
+
+    - AR(1)
+    - MA(1), MA(2)
+    - ARMA(1,1), ARMA(1,2)
 
 ---
 
-## 5. Fit the possible ARMA models you identified and perform model selection to determine the ‘best’ model.
+## **2.5.** Fit the possible ARMA models you identified and perform model selection to determine the ‘best’ model.
 
 ```{r}
-# fit AR(1), MA(1), ARMA(1,1)
-model_ar1 <- Arima(detend_monthlyTS, order= c(1,0,0))
-model_ma1 <- Arima(detend_monthlyTS, order= c(0,0,1))
-model_arma11 <- Arima(detend_monthlyTS, order= c(1,0,1))
+# fit AR(1), MA(1/2), ARMA(1,1/2)
+month_model_ar1 <- Arima(time_series_monthly, order=c(1,0,0))
+month_model_ma1 <- Arima(time_series_monthly, order=c(0,0,1))
+month_model_ma2 <- Arima(time_series_monthly, order=c(0,0,2))
+month_model_arma11 <- Arima(time_series_monthly, order=c(1,0,1))
+month_model_arma12 <- Arima(time_series_monthly, order=c(1,0,2))
 
-# summary(model_arma11)
+
+# summary(model_arma12)
 
 # AIC vs BIC to pick best model
 model_comparison <- data.frame(
-  Model = c("AR(1)", "MA(1)", "ARMA(1,1)"),
-  AIC = c(AIC(model_ar1), AIC(model_ma1), AIC(model_arma11)),
-  BIC = c(BIC(model_ar1), BIC(model_ma1), BIC(model_arma11))
+  Model = c("AR(1)", "MA(1)", "MA(2)", "ARMA(1,1)", "ARMA(1,2)"),
+  AIC = c(AIC(month_model_ar1), AIC(month_model_ma1), AIC(month_model_ma2), AIC(month_model_arma11), AIC(month_model_arma12)),
+  BIC = c(BIC(month_model_ar1), BIC(month_model_ma1), BIC(month_model_ma2), BIC(month_model_arma11), BIC(month_model_arma12))
 )
 
 print(model_comparison)
 ```
 
 
-Unlike our annual series, our monthly series shows ARMA(1,1) to be the **significantly** better selection for ARMA model, and subsequently more complex model will be preferred.
+AMRA(1,2) achieved the lowest AIC/BIC criterion values, outperforming our AR(1) MA(1/2) and ARMA(1,1) models. The reason for its sucsess is likely its increased flexibility useful for seasonal/cyclical data. The specific choice in ARMA(1,2) indicates that the monthly time series shows short term autocorrelation (achived by AR(1)) as well as requires corrections for noise across two periods (MA(2)) showing slightly longer dependence in the series further than short term immediate months. 
+
+The significantly higher AIC/BIC values compared to the yearly series once again confirms increased complexity in the monthly series. This is expected as monthly data naturally contains more variation/short-term rapid changes which can't be captured by simpler models like AR(1), MA(1), MA(2), or even ARMA(1,1).
+
+*ARMA(1,2) is the selected model moving forward.*
+
+---
+
+## **2.6.** Perform a one-year-ahead forecast. Calculate the prediction and provide a 95% Prediction Interval.
+
+```{r}
+month_forecast_arma12 <- forecast(month_model_arma12, h= 1, level= 95)
+print(month_forecast_arma12)
+plot(month_forecast_arma12, main= "One Year Forecast using ARMA(1,2) and month time series")
+```
+
+---
+
+# Problem 3. Spatial Interpolation Using Gaussian process model.
+
+In this problem we will use the fields package to conduct spatial interpolation using Gaussian process model. We use ozone2 dataset in the fields package to interpolate average ozone levels.
+
+---
+
+## **3.1.** Use the following script to load the data:
+
+```{r}
+data(ozone2)
+loc <- ozone2$lon.lat
+rg <- apply(loc, 2, range)
+y <- ozone2$y[16,]
+good <- !is.na(y)
+```
+
+---
+
+## **3.2.** Visualize the spatial data using the script below and describe your findings:
+
+```{r}
+library(maps)
+map("state", xlim = rg[, 1], ylim = rg[, 2])
+quilt.plot(loc[good,], y[good], nx = 60, ny = 48, add = T)
+```
+
+
+
+
+
+---
+
+
+## **3.3.** Make a variogram by assuming a linear spatial trend. You may use the following script to plot the variogram. Describe qualitatively what you learned about the spatial correlation from this variogram.
+
+
+```{r}
+# remove linear spatial trend
+lm <- lm(y[good] ~ loc[good,])
+d <- rdist.earth(loc[good,]); maxd <- max(d)
+vgram <- vgram(loc = loc[good,], y = lm$residuals, N = 30, lon.lat = TRUE)
+plot(vgram$stats["mean",] ~ vgram$centers, main = "Binned Semivariogram", las = 1, ylab = "", xlab = "Dist (miles)", col = "red",
+xlim = c(0, 0.3 * maxd), ylim = c(0, 700))
+```
 
 
 
 
 
 
-=======
->>>>>>> 380e9e2b1459284b82c39252b2deab0b02d7bdcd
 
 
+---
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## **3.3.**
 
 
 
