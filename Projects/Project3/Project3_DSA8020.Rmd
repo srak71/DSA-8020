@@ -26,8 +26,6 @@ In Problems 1 and 2, you are required to analyze an ERA-Interim average temperat
 
 # Problem 1. Analyzing Yearly Average Temperatures Time-Series
 
----
-
 ## **1.1.** The following steps are needed to extract the annual mean temperatures at the specified location from the original dataset with daily temperatures at thousands of locations:
 
 ### a. First, use the following R script to load the R data object:
@@ -94,7 +92,7 @@ print("Yearly Time Series summary: ")
 print(summary(time_series_yearly))
 ```
 
----
+
 
 ## **1.2.** Describe the main features of the annual time series data you extracted.
 
@@ -116,7 +114,7 @@ Our time series feature analysis using *tsfeatures* for the annual series reveal
 |x_acf1   |0.4117 |Moderate indication of autocorrelation, any given years values show to depend on its previous year|
 
 
----
+
 
 ## **1.3.** Is it reasonable to assume that there is a linear trend? If so, estimate and remove the trend to get the detrended time series.
 
@@ -174,7 +172,7 @@ plot(
 )
 ```
 
----
+
 
 ## **1.4.** Make **acf** and **pacf** plots for the detrended time series to identify possible **ARMA** models. That is, determine the possible orders *p* for the *AR* component and the orders *q* for the *MA* component.
 
@@ -214,7 +212,7 @@ Since both ACF and PACF show prominent spike at lag=1 and no significant subsequ
 
 However, we will also establish simpler models, such as *AR(1)* and *MA(1)* for comparing using model selection criteria (AIC/BIC). 
 
----
+
 
 ## **1.5.** Fit the possible ARMA models you identified and perform model selection to determine the ‘best’ model.
 
@@ -259,7 +257,7 @@ Results:
 Based on model selection criteria, we will select AR(1) model as our choice for modeling this time series. This implies a linear relationship with last year's anomaly alone best explains the current year's temperature anomaly.
 
 
----
+
 
 ## **1.6.** Perform a one-year-ahead forecast. Calculate the prediction and provide a 95% Prediction Interval.
 
@@ -284,7 +282,6 @@ We can predict a temperature anomaly for next year to be approximately $0.2378\,
 
 Repeat the analysis for Problem 1 but for the monthly average time series (which canbe extracted using the script below). An important component of this problem is the analysis of seasonal patterns when dealing with sub-annual data. Some .yiytechniques from Week 14 should be employed to complete this problem.
 
----
 
 ## **2.2.** Describe the main features of the monthly time series data you extracted.
 
@@ -297,7 +294,7 @@ print("Monthly Time Series summary: ")
 print(summary(time_series_monthly))
 print(monthly_features)
 
-plot(time_series_monthly, main= "Monthly Time Series Plot", ylab= "Observed Value", xlab= "Time")
+plot(time_series_monthly, main = "Monthly Time Series Plot", ylab = "Observed Value", xlab = "Time")
 ```
 
 Our time series feature analysis using *tsfeatures* for the monthly series reveals the following:
@@ -314,8 +311,6 @@ Our time series feature analysis using *tsfeatures* for the monthly series revea
 
 The Monthly TS Plot clearly shows patterns of seasonality - attributed to the periodic peaks and drops 
 
-
----
 
 ## **2.3.** Is it reasonable to assume that there is a linear trend? If so, estimate and remove the trend to get the detrended time series.
 
@@ -336,27 +331,22 @@ plot(
   xlab= "Time",
   panel.first= grid()
   )
-abline(lm_monthly, col= "red", lwd= 2)
+abline(lm_monthly, col = "red", lwd = 2)
 ```
 
 There is no strong evidence that the series shows any type of linear trend as it's p-value is very high (0.4712). This is reflected in the plot, where points rarely follow a linear pattern. Thus we will not go through the process of detrending the time series. 
 
 
----
 
 ## **2.4.** Make **acf** and **pacf** plots for the detrended time series to identify possible **ARMA** models. That is, determine the possible orders *p* for the *AR* component and the orders *q* for the *MA* component.
 
 
 ```{r}
 # ACF plot
-ggAcf(time_series_monthly,
-      main= "ACF (Detrended Monthly Series)",
-      size= 3, col= "blue")
+ggAcf(time_series_monthly, main = "ACF (Detrended Monthly Series)", size = 3, col = "blue")
 
 # PACF plot
-ggPacf(time_series_monthly,
-       main= "PACF (Detrended Monthly Series)",
-       size= 3, col= "blue")
+ggPacf(time_series_monthly, main = "PACF (Detrended Monthly Series)", size = 3, col = "blue")
 ```
 
 ACF Plot:
@@ -375,7 +365,7 @@ Our plots reveal the best candidate models for fitting are:
     - MA(1), MA(2)
     - ARMA(1,1), ARMA(1,2)
 
----
+
 
 ## **2.5.** Fit the possible ARMA models you identified and perform model selection to determine the ‘best’ model.
 
@@ -388,7 +378,7 @@ month_model_arma11 <- Arima(time_series_monthly, order=c(1,0,1))
 month_model_arma12 <- Arima(time_series_monthly, order=c(1,0,2))
 
 
-# summary(model_arma12)
+summary(month_model_arma12)
 
 # AIC vs BIC to pick best model
 model_comparison <- data.frame(
@@ -407,7 +397,6 @@ The significantly higher AIC/BIC values compared to the yearly series once again
 
 *ARMA(1,2) is the selected model moving forward.*
 
----
 
 ## **2.6.** Perform a one-year-ahead forecast. Calculate the prediction and provide a 95% Prediction Interval.
 
@@ -435,7 +424,7 @@ y <- ozone2$y[16,]
 good <- !is.na(y)
 ```
 
----
+
 
 ## **3.2.** Visualize the spatial data using the script below and describe your findings:
 
@@ -449,19 +438,24 @@ quilt.plot(loc[good,], y[good], nx = 60, ny = 48, add = T)
 
 
 
----
 
 
 ## **3.3.** Make a variogram by assuming a linear spatial trend. You may use the following script to plot the variogram. Describe qualitatively what you learned about the spatial correlation from this variogram.
-
 
 ```{r}
 # remove linear spatial trend
 lm <- lm(y[good] ~ loc[good,])
 d <- rdist.earth(loc[good,]); maxd <- max(d)
 vgram <- vgram(loc = loc[good,], y = lm$residuals, N = 30, lon.lat = TRUE)
-plot(vgram$stats["mean",] ~ vgram$centers, main = "Binned Semivariogram", las = 1, ylab = "", xlab = "Dist (miles)", col = "red",
-xlim = c(0, 0.3 * maxd), ylim = c(0, 700))
+plot(vgram$stats["mean",] ~ vgram$centers, 
+     main = "Binned Semivariogram", 
+     las = 1, 
+     ylab = "", 
+     xlab = "Dist (miles)", 
+     col = "red", 
+     xlim = c(0, 0.3 * maxd), 
+     ylim = c(0, 700)
+     )
 ```
 
 
@@ -471,18 +465,49 @@ xlim = c(0, 0.3 * maxd), ylim = c(0, 700))
 
 
 
----
+## **3.4.** Use the following script to fit a Gaussian process to the data and to decompose the prediction into a spatial trend part and spatially correlated error part. Explain what mean function and covariance function are being used here.
 
-## **3.3.**
+```{r}
+fit <- spatialProcess(loc[good,], y[good])
+
+out.full <- predictSurface(fit, extrap = T)
+out.poly <- predictSurface(fit, just.fixed = T, extrap = T)
+
+out.spatial <- out.full
+out.spatial$z <- out.full$z - out.poly$z
+
+set.panel(1, 3)
+surface(out.full, las = 1, xlab = "Lon", ylab = "Lat", col = tim.colors())
+title("Full model")
+map("state", add = T)
+surface(out.poly, las = 1, xlab = "Lon", ylab = "Lat", col = tim.colors())
+map("state", add = T)
+title("Spatial trend")
+surface(out.spatial, las = 1, xlab = "Lon", ylab = "Lat", col = tim.colors())
+map("state", add = T)
+title("Spatial error")
+```
 
 
 
 
+## **3.5.** Make prediction map and the associated prediction uncertainty map using the script below. Can you explain the spatial variation in the uncertainty map?
 
+```{r}
+xg <- fields.x.to.grid(loc[good,])
+Pred <- predict.mKrig(fit, xnew = expand.grid(xg))
+SE <- predictSE(fit, xnew = expand.grid(xg))
 
-
-
-
-
+par(mfrow = c(1, 2), las = 1)
+map("state", xlim = rg[, 1], ylim = rg[, 2])
+image.plot(xg[[1]], xg[[2]], matrix(Pred, 80), add = T)
+map("state", xlim = rg[, 1], ylim = rg[, 2], add = T)
+title("Prediction")
+map("state", xlim = rg[, 1], ylim = rg[, 2])
+image.plot(xg[[1]], xg[[2]], matrix(SE, 80), add = T)
+map("state", xlim = rg[, 1], ylim = rg[, 2], add = T)
+title("Prediction SE")
+points(loc, pch = 16, cex = 0.5)
+```
 
 
