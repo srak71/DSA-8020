@@ -15,6 +15,7 @@ library(forecast)
 library(zoo)
 ```
 
+---
 
 # Project Description
 
@@ -125,11 +126,11 @@ plot(time_series_yearly, main= "Annual Time Series Plot", ylab= "Observed Value"
 
 Our graph does not reveal much significant information. However, based on our previous results from *tsfeatures*, it is still somewhat reasonable to expect the possibility of a linear trend:
 
-    1. trend: value 0.43 shows significant enough trend in data to expect some prediction.
+  1. trend: value 0.43 shows significant enough trend in data to expect some prediction.
     
-    2. linearity: while this is not 0, it is still low enough to keep linearity as a reasonable possibility.
+  2. linearity: while this is not 0, it is still low enough to keep linearity as a reasonable possibility.
     
-    3. curvature: even though value is high (indicating a non-perfect linear fit), it is still significant enough to keep linearity a potential assumption, especially early on in the analysis.
+  3. curvature: even though value is high (indicating a non-perfect linear fit), it is still significant enough to keep linearity a potential assumption, especially early on in the analysis.
     
 Since a linear trend is not out of question for our time series, we will now estimate its value.
 
@@ -156,7 +157,12 @@ abline(lm_annual, col= "red", lwd= 2)
 
 Our linear model fit reveals a p-value of 0.64, showing that a linear trend is statistically insignificant - leading us to fail to reject the null hypothesis and conclude there is no strong proof of linear behavior in the data. This is further confirmed by our Yearly Time Series(Trend) plot, which shows the data fluctuating significantly around our linear trend line (red) as well as many clearly non-linear patterns. It may be possible that the data could have a different measurable trend such as cyclical behavior, as is not unusual with environmental data.
 
-Although our linear trend model was not statistically significant, we will proceed to detrend the time series data to obtain residual series which reflect deviation from potential linear trend. Our detrended model will provide useful for further decomposition or static testing. We will detrend our data by subtracting the fitted linear trend from observed values. 
+
+
+## **1.4.** Make **acf** and **pacf** plots for the detrended time series to identify possible **ARMA** models. That is, determine the possible orders *p* for the *AR* component and the orders *q* for the *MA* component.
+
+
+Although our linear trend model in part **1.3** was not statistically significant, we will proceed to detrend the time series data to obtain residual series which reflect deviation from potential linear trend. Our detrended model will provide useful for further decomposition or static testing. We will detrend our data by subtracting the fitted linear trend from observed values. 
 
 ```{r}
 # detrended time series
@@ -172,20 +178,15 @@ plot(
 )
 ```
 
-
-
-## **1.4.** Make **acf** and **pacf** plots for the detrended time series to identify possible **ARMA** models. That is, determine the possible orders *p* for the *AR* component and the orders *q* for the *MA* component.
-
-
 ```{r}
 # ACF plot
 ggAcf(detrended_ts,
-      main= "ACF (Detrended Time Series)",
+      main = "ACF (Detrended Time Series)",
       size= 3, col= "blue")
 
 # PACF plot
 ggPacf(detrended_ts,
-       main= "PACF (Detrended TS)",
+       main = "PACF (Detrended TS)",
        size= 3, col= "blue")
 ```
 
@@ -194,15 +195,15 @@ In determining a suitable ARMA model for our detrended time series, we examined 
 
 ACF Observations:
 
-    - Shows significant spike at lag=1, which is followed by values which quickly taper off and fall within 95% confidence interval bound.
+  - Shows significant spike at lag=1, which is followed by values which quickly taper off and fall within 95% confidence interval bound.
     
-    - This cutoff after lag=1 is native to a Moving Average process, with order q=1 $\rightarrow$ suggesting MA(1) as potential.
+  - This cutoff after lag=1 is native to a Moving Average process, with order q=1 $\rightarrow$ suggesting MA(1) as potential.
     
 PACF Observations:
 
-    - Also shows significant spike at lag=1, however subsequent lags do not show substantial values.
+  - Also shows significant spike at lag=1, however subsequent lags do not show substantial values.
     
-    - This quality is characteristic of Auto-regressive processes of order p=1 $\rightarrow$ suggests a potential AR(1) component. 
+  - This quality is characteristic of Auto-regressive processes of order p=1 $\rightarrow$ suggests a potential AR(1) component. 
 
 Model Implications:
 
@@ -215,7 +216,6 @@ However, we will also establish simpler models, such as *AR(1)* and *MA(1)* for 
 
 
 ## **1.5.** Fit the possible ARMA models you identified and perform model selection to determine the ‘best’ model.
-
 
 To identify our optimal ARMA model for our detrended time series, we will fit our three candidate models we found from ACF/PACF plot analysis.
 
@@ -248,11 +248,11 @@ print(model_comparison)
 
 Results:
 
-    - The AR(1) model has lowest AIC/BIC values by a small margin, indicating it offers the best trade off between good fit and model complexity.
+  - The AR(1) model has lowest AIC/BIC values by a small margin, indicating it offers the best trade off between good fit and model complexity.
     
-    - MA(1) very close in performance.
+  - MA(1) very close in performance.
     
-    - ARMA(1,1) clearly not an optimal choice. 
+  - ARMA(1,1) clearly not an optimal choice. 
 
 Based on model selection criteria, we will select AR(1) model as our choice for modeling this time series. This implies a linear relationship with last year's anomaly alone best explains the current year's temperature anomaly.
 
@@ -261,8 +261,7 @@ Based on model selection criteria, we will select AR(1) model as our choice for 
 
 ## **1.6.** Perform a one-year-ahead forecast. Calculate the prediction and provide a 95% Prediction Interval.
 
-
-Using the AR(1) model, we will perform a one year forecast to predict the next value in our detrended anomaly series. We will use the *forecast()* function with 'h=1' to compute forecast for one time step ahead, as well as specify a 95% Prediction Interval to quantify uncertainty around forecast.
+Using the AR(1) model, we will perform a one year forecast to predict the next value in our detrended anomaly series. We will use the *forecast()* function with 'h=1' to compute forecast for one time step ahead, as well as specify a 95% Prediction Interval to quantify uncertainty around forecast. As our AR(1) model was built using detrended time series data, the following forecast will be for anomalies only.
 
 ```{r}
 forecast_ar1 <- forecast(model_ar1, h= 1, level= 95)
@@ -271,7 +270,7 @@ plot(forecast_ar1, main= "One Year Forecast using AR(1)")
 ```
 
 
-Forecasting Results:
+**Forecasting Results:**
 
 We can predict a temperature anomaly for next year to be approximately $0.2378\,^\circ\text{C}$. Our 95% Prediction Interval ranges from $-0.778\,^\circ\text{C}$ to $1.253\,^\circ\text{C}$, meaning we are 95% confident values will fall in this range. The positive point forecast alludes a mild increase in temperature anomaly which continues slow upwards patter of recent years. The wide nature of the prediction interval can be reflective of external factors that our model could not account for, and also highlights uncertainty in long term forecasting from lower order AR models, which prove to be more useful for short term predictions.
 
@@ -280,14 +279,17 @@ We can predict a temperature anomaly for next year to be approximately $0.2378\,
 
 # Problem 2.  Analyzing Monthly Average Temperature Time Series
 
-Repeat the analysis for Problem 1 but for the monthly average time series (which canbe extracted using the script below). An important component of this problem is the analysis of seasonal patterns when dealing with sub-annual data. Some .yiytechniques from Week 14 should be employed to complete this problem.
+Repeat the analysis for Problem 1 but for the monthly average time series (which can be extracted using the script below). An important component of this problem is the analysis of seasonal patterns when dealing with sub-annual data. Some techniques from Week 14 should be employed to complete this problem.
 
 
 ## **2.2.** Describe the main features of the monthly time series data you extracted.
 
 ```{r}
 time_series_monthly_matrix <- tapply(time_series_daily, list(mon, yr), mean)
-time_series_monthly <- ts(as.vector(time_series_monthly_matrix), start = c(min(yr), min(mon)), frequency = 12)
+time_series_monthly <- ts(as.vector(time_series_monthly_matrix),
+                          start = c(min(yr),
+                                    min(mon)),
+                          frequency = 12)
 monthly_features <- tsfeatures(time_series_monthly)
 
 print("Monthly Time Series summary: ")
@@ -307,9 +309,10 @@ Our time series feature analysis using *tsfeatures* for the monthly series revea
 |spike    |8.56e-08| Extremely low, shows no outliers in time series data.                                         |
 |linearity|0.555405| Points to nonlinearity, meaning other patterns such as seasonal or cyclical could be at play. |
 |curvature|2.554952| Points to nonlinearity, meaning other patterns such as seasonal or cyclical could be at play. |
-|entropy  |0.497834| Shows high levels of randomness/unpredicability.                                              |
+|entropy  |0.497834| Shows high levels of randomness/unpredictability.                                              |
 
 The Monthly TS Plot clearly shows patterns of seasonality - attributed to the periodic peaks and drops 
+
 
 
 ## **2.3.** Is it reasonable to assume that there is a linear trend? If so, estimate and remove the trend to get the detrended time series.
@@ -326,7 +329,7 @@ plot(
   x= time_index,
   y= time_series_monthly,
   type= "o", # measured points w/ time continuity 
-  main= "Monthly Time Series(Trend)",
+  main= "Monthly Time Series (Trend)",
   ylab= "Observed Value",
   xlab= "Time",
   panel.first= grid()
@@ -340,13 +343,26 @@ There is no strong evidence that the series shows any type of linear trend as it
 
 ## **2.4.** Make **acf** and **pacf** plots for the detrended time series to identify possible **ARMA** models. That is, determine the possible orders *p* for the *AR* component and the orders *q* for the *MA* component.
 
+```{r}
+detrended_monthly_ts <- residuals(lm_monthly)
+plot(
+  time_index,
+  detrended_monthly_ts,
+  type= "o",
+  main= "Detrended Monthly Time Series",
+  ylab= "Detrended Value",
+  xlab= "Time",
+  panel.first= grid()
+)
+```
+
 
 ```{r}
 # ACF plot
-ggAcf(time_series_monthly, main = "ACF (Detrended Monthly Series)", size = 3, col = "blue")
+ggAcf(detrended_monthly_ts, main = "ACF (Detrended Monthly Series)", size = 3, col = "blue")
 
 # PACF plot
-ggPacf(time_series_monthly, main = "PACF (Detrended Monthly Series)", size = 3, col = "blue")
+ggPacf(detrended_monthly_ts, main = "PACF (Detrended Monthly Series)", size = 3, col = "blue")
 ```
 
 ACF Plot:
@@ -371,11 +387,11 @@ Our plots reveal the best candidate models for fitting are:
 
 ```{r}
 # fit AR(1), MA(1/2), ARMA(1,1/2)
-month_model_ar1 <- Arima(time_series_monthly, order=c(1,0,0))
-month_model_ma1 <- Arima(time_series_monthly, order=c(0,0,1))
-month_model_ma2 <- Arima(time_series_monthly, order=c(0,0,2))
-month_model_arma11 <- Arima(time_series_monthly, order=c(1,0,1))
-month_model_arma12 <- Arima(time_series_monthly, order=c(1,0,2))
+month_model_ar1 <- Arima(detrended_monthly_ts, order=c(1,0,0))
+month_model_ma1 <- Arima(detrended_monthly_ts, order=c(0,0,1))
+month_model_ma2 <- Arima(detrended_monthly_ts, order=c(0,0,2))
+month_model_arma11 <- Arima(detrended_monthly_ts, order=c(1,0,1))
+month_model_arma12 <- Arima(detrended_monthly_ts, order=c(1,0,2))
 
 
 summary(month_model_arma12)
@@ -383,15 +399,24 @@ summary(month_model_arma12)
 # AIC vs BIC to pick best model
 model_comparison <- data.frame(
   Model = c("AR(1)", "MA(1)", "MA(2)", "ARMA(1,1)", "ARMA(1,2)"),
-  AIC = c(AIC(month_model_ar1), AIC(month_model_ma1), AIC(month_model_ma2), AIC(month_model_arma11), AIC(month_model_arma12)),
-  BIC = c(BIC(month_model_ar1), BIC(month_model_ma1), BIC(month_model_ma2), BIC(month_model_arma11), BIC(month_model_arma12))
+  AIC = c(AIC(month_model_ar1),
+          AIC(month_model_ma1),
+          AIC(month_model_ma2),
+          AIC(month_model_arma11),
+          AIC(month_model_arma12)
+          ),
+  BIC = c(BIC(month_model_ar1),
+          BIC(month_model_ma1),
+          BIC(month_model_ma2),
+          BIC(month_model_arma11),
+          BIC(month_model_arma12))
 )
 
 print(model_comparison)
 ```
 
 
-AMRA(1,2) achieved the lowest AIC/BIC criterion values, outperforming our AR(1) MA(1/2) and ARMA(1,1) models. The reason for its sucsess is likely its increased flexibility useful for seasonal/cyclical data. The specific choice in ARMA(1,2) indicates that the monthly time series shows short term autocorrelation (achived by AR(1)) as well as requires corrections for noise across two periods (MA(2)) showing slightly longer dependence in the series further than short term immediate months. 
+AMRA(1,2) achieved the lowest AIC/BIC criterion values, outperforming our AR(1) MA(1/2) and ARMA(1,1) models. The reason for its success is likely its increased flexibility useful for seasonal/cyclical data. The specific choice in ARMA(1,2) indicates that the monthly time series shows short term autocorrelation (achieved by AR(1)) as well as requires corrections for noise across two periods (MA(2)) showing slightly longer dependence in the series further than short term immediate months. 
 
 The significantly higher AIC/BIC values compared to the yearly series once again confirms increased complexity in the monthly series. This is expected as monthly data naturally contains more variation/short-term rapid changes which can't be captured by simpler models like AR(1), MA(1), MA(2), or even ARMA(1,1).
 
@@ -401,9 +426,9 @@ The significantly higher AIC/BIC values compared to the yearly series once again
 ## **2.6.** Perform a one-year-ahead forecast. Calculate the prediction and provide a 95% Prediction Interval.
 
 ```{r}
-month_forecast_arma12 <- forecast(month_model_arma12, h= 1, level= 95)
+month_forecast_arma12 <- forecast(month_model_arma12, h = 12, level = 95) # h=12 for full year
 print(month_forecast_arma12)
-plot(month_forecast_arma12, main= "One Year Forecast using ARMA(1,2) and month time series")
+plot(month_forecast_arma12, main= "One Year Forecast using ARMA(1,2) and Month time series")
 ```
 
 ---
@@ -411,8 +436,6 @@ plot(month_forecast_arma12, main= "One Year Forecast using ARMA(1,2) and month t
 # Problem 3. Spatial Interpolation Using Gaussian process model.
 
 In this problem we will use the fields package to conduct spatial interpolation using Gaussian process model. We use ozone2 dataset in the fields package to interpolate average ozone levels.
-
----
 
 ## **3.1.** Use the following script to load the data:
 
@@ -425,7 +448,6 @@ good <- !is.na(y)
 ```
 
 
-
 ## **3.2.** Visualize the spatial data using the script below and describe your findings:
 
 ```{r}
@@ -434,9 +456,9 @@ map("state", xlim = rg[, 1], ylim = rg[, 2])
 quilt.plot(loc[good,], y[good], nx = 60, ny = 48, add = T)
 ```
 
+**Findings:**
 
-
-
+The spatial plot produced using `quilt.plot()` overlays observed ozone measurements on a map of the US. The color gradient reveals a clear spatial structure in ozone levels across locations. Higher concentrations appear in certain clustered areas while other regions show consistently lower values. This indicates spatial heterogeneity in the ozone data, which justifies the need for spatial modeling techniques like Gaussian process regression. Additionally, there appears to be a smooth transition in values across space, suggesting underlying spatial correlation. This is a key assumption that will be further validated in the variogram analysis.
 
 
 
@@ -458,10 +480,11 @@ plot(vgram$stats["mean",] ~ vgram$centers,
      )
 ```
 
+**Findings:**
 
+The binned semi-variogram shows a clear upward trend with increasing distance, which is characteristic of spatial correlation: observations that are closer together tend to be more similar than those farther apart. Initially, the semi-variance increases rapidly, indicating strong spatial correlation at small distances. However, the curve begins to level off around a distance of 150–200 miles, suggesting a potential range beyond which spatial correlation diminishes significantly (i.e., spatial dependence weakens).
 
-
-
+By first removing a linear spatial trend before computing the variogram, we isolate and visualize the residual spatial correlation that is not explained by the trend. This makes the variogram a better diagnostic for the spatial error component, allowing for a clearer identification of spatial correlation structure in the data. Without removing the trend, the variogram could misleadingly reflect large-scale drift instead of localized correlation.
 
 
 
@@ -488,6 +511,21 @@ map("state", add = T)
 title("Spatial error")
 ```
 
+**Findings:**
+
+The `spatialProcess()` function in the `fields` package fits a Gaussian process model with the following components:
+
+- *Mean function*: A linear model (`just.fixed = TRUE`) is used to estimate the large-scale spatial trend. This is the "spatial trend" part visualized in the middle panel of the surface plots.
+
+- *Covariance function*: The spatially correlated residuals are modeled using an **exponential covariance function** by default in `spatialProcess()`. This captures how the correlation between values decays with distance.
+
+Thus, the total prediction is a sum of:
+
+> 1. A fixed mean structure (linear in coordinates),
+
+> 2. A zero-mean Gaussian process for the residual spatial variation.
+
+The decomposition into "Full model", "Spatial trend", and "Spatial error" visually shows this split, where the spatial error captures more local deviations not explained by the broad trend.
 
 
 
@@ -509,5 +547,20 @@ map("state", xlim = rg[, 1], ylim = rg[, 2], add = T)
 title("Prediction SE")
 points(loc, pch = 16, cex = 0.5)
 ```
+
+**Findings:**
+
+The uncertainty map (Prediction SE) reveals the spatial distribution of the standard errors associated with predictions from the Gaussian process model. As expected in kriging models, uncertainty is lowest in areas where observations are dense and higher in regions far from observed locations. This reflects the model’s reliance on nearby data points to make predictions—greater proximity to observations reduces uncertainty. Specifically...
+
+  - Near dense clusters of observation points, the prediction standard error is small, indicating high confidence in model estimates.
+    
+  - As you move away from observation locations (especially near the edges or gaps in the spatial domain), the prediction SE increases, visualized by warmer color shades (e.g., reds/oranges).
+    
+  - The pattern of uncertainty is consistent with spatial interpolation theory, where model predictions become more uncertain as spatial extrapolation increases.
+
+This map is essential for understanding not just what the model predicts, but how reliable those predictions are across the spatial domain.
+
+
+---
 
 
